@@ -19,28 +19,28 @@ help: setup
 	echo "  NAME:    $(NAME)"
 	echo "  VERSION: $(VERSION)"
 	echo "Help:"
-	echo "  make test        - Test Python package"
-	echo "  make run-script  - Run Python __main__.py"
-	echo "  make run-package - Run Python package"
-	echo "  make build       - Build Python package"
-	echo "  make clean       - Reset Python environment"
-	echo "  make version     - Set Python package version"
-	echo "  make commit      - Create Git commit"
-	echo "  make release     - Build Python Wheel + Git Tag"
+	echo "  make test    - Test Python package"
+	echo "  make run     - Run Python package command"
+	echo "  make build   - Build Python package"
+	echo "  make clean   - Reset Python environment"
+	echo "  make version - Set Python package version"
+	echo "  make commit  - Create Git commit"
+	echo "  make release - Build Python Wheel + Git Tag"
 
 setup: $(uv_bin) .gitignore tmp .venv uv.lock
 
-test: setup
-	echo "Running tests..."
+test-role: setup
+	uv run gcp-iam-roles --role roles/editor
+	uv run gcp-iam-roles --role vertex
 
-run-package:
+test-permissions: setup
+	gcp-iam-roles --p compute.addresses.createTagBinding
+
+run:
 	uv run $(NAME)
 
-run-script:
-	uv run --script src/$(MODULE)/__main__.py
-
 build: setup
-	uv build
+	uv build --wheel
 
 clean:
 	rm -rf .venv uv.lock requirements.txt build/ dist/ *.egg-info/
@@ -105,11 +105,35 @@ commit: version
 	ruff check .
 	git commit -m "Patch: $(NAME) v$(VERSION)"
 
-release:
+release: setup
 	$(eval version := $(shell date '+%Y.%m.%d'))
 	set -e
 	sed -i 's/version = "[0-9]\+\.[0-9]\+\.[0-9]\+.*"/version = "$(version)"/' pyproject.toml
-	uv build
+	uv sync --inexact
 	git add --all
-	git commit -m "Release: $(NAME) v$(version)"
-	git tag --force $(version) -m "Release: $(NAME) v$(version)"
+	rm -rf dist/
+	uv build --wheel
+	gpg --detach-sign dist/*.whl
+	git commit -m "Release: $(NAME) v$(version)" || true
+	git push origin main
+	gh release create $(version) --title "$(version)" --generate-notes ./dist/*.*
+
+###############################################################################
+# Google CLI
+###############################################################################
+
+google_project ?= coroil-ocrdoc-dev1
+google_region ?= us-central1
+
+google: google-config
+
+google-auth:
+	gcloud auth revoke --all
+	gcloud auth login --update-adc --no-launch-browser
+
+google-config:
+	set -e
+	gcloud auth application-default set-quota-project $(google_project)
+	gcloud config set core/project $(google_project)
+	gcloud config set compute/region $(google_region)
+	gcloud config list

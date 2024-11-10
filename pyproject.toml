@@ -2,12 +2,16 @@
 authors = [
   {name = "Konstantin Borovik", email = "kb@lab5.ca"},
 ]
-dependencies = []
-description = "Add your description here"
+dependencies = [
+  "argcomplete>=3.5.1",
+  "google-cloud-iam>=2.16.0",
+  "prettytable>=3.12.0",
+]
+description = "Query GCP IAM roles and permissions"
 name = "gcp-iam-roles"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2024.11.09.post1845"
+version = "2024.11.12.post1708"
 
 [project.scripts]
 gcp-iam-roles = "gcp_iam_roles:main"
