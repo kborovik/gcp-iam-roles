@@ -9,7 +9,7 @@ from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
 from .permissions import search_permissions, store_permissions
 from .roles import get_roles, search_roles, store_roles
-from .services import get_services, search_services, store_services
+from .services import get_services, search_services
 
 
 def main() -> None:
@@ -106,7 +106,7 @@ def main() -> None:
         create_db()
         store_roles(get_roles())
         store_permissions()
-        store_services(get_services(project_id=project_id))
+        get_services(project_id=project_id)
 
     elif args.clear_db:
         clear_db()

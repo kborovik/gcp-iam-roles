@@ -20,12 +20,9 @@ help: setup
 	echo "  VERSION: $(VERSION)"
 	echo "Help:"
 	echo "  make test    - Test Python package"
-	echo "  make run     - Run Python package command"
-	echo "  make build   - Build Python package"
 	echo "  make clean   - Reset Python environment"
-	echo "  make version - Set Python package version"
 	echo "  make commit  - Create Git commit"
-	echo "  make release - Build Python Wheel + Git Tag"
+	echo "  make release - Build Python Wheel and publish to GitHub"
 
 setup: $(uv_bin) .gitignore tmp .venv uv.lock
 

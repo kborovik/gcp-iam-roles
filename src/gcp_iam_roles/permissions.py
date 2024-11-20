@@ -79,7 +79,7 @@ def store_permissions() -> None:
             except sqlite3.Error as error:
                 logger.error("SQLite Error: ", error)
             except KeyboardInterrupt:
-                print("\nOperation cancelled by user")
+                logger.warning("Operation cancelled by user")
                 sys.exit(130)
 
     conn.close()

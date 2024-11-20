@@ -1,7 +1,6 @@
 import sqlite3
 import time
 from dataclasses import dataclass
-from typing import List
 
 from google.cloud import service_usage_v1
 from loguru import logger
@@ -16,14 +15,13 @@ class Service:
     title: str
 
 
-def get_services(project_id: str) -> List[Service]:
+def get_services(project_id: str) -> None:
     """
     Retrieves a list of all Google Cloud services.
     """
 
     page_size = 10
     delay = 2
-    services: List[Service] = []
 
     logger.info("Getting Google Cloud Services...")
 
@@ -36,54 +34,43 @@ def get_services(project_id: str) -> List[Service]:
         for page in page_results.pages:
             for service in page.services:
                 if service.config.name.endswith("googleapis.com"):
-                    services.append(
-                        Service(
-                            name=service.config.name,
-                            title=service.config.title,
-                        )
+                    service = Service(
+                        name=service.config.name,
+                        title=service.config.title,
                     )
-                    logger.info(
-                        f"Received Google Cloud Services: {service.config.name}"
-                    )
+                    logger.info(f"Found Google Cloud Services '{service.name}'")
+                    store_services(service)
             time.sleep(delay)
     except Exception as error:
         logger.error(f"Error getting Google Cloud Services: {error}")
     except KeyboardInterrupt:
         logger.warning("Operation cancelled by user")
 
-    return services
 
-
-def store_services(services: Service) -> None:
+def store_services(service: Service) -> None:
     """
     Inserts a list of Google Cloud services into a SQLite database table.
     """
-    db_service_stored = []
 
     conn = sqlite3.connect(DB_FILE.as_uri())
 
-    logger.info("Storing Google Cloud Services in database...")
-
     try:
         cursor = conn.cursor()
-        for service in services:
-            cursor.execute(
-                "INSERT INTO services (service, title) VALUES (?, ?)",
-                (
-                    service.name,
-                    service.title,
-                ),
-            )
+        cursor.execute(
+            "INSERT INTO services (service, title) VALUES (?, ?)",
+            (
+                service.name,
+                service.title,
+            ),
+        )
         conn.commit()
-        db_service_stored.append(service.name)
+        logger.success(f"Saved Google Cloud Service '{service.name}' in database")
     except sqlite3.IntegrityError:
-        pass
+        logger.warning(f"Duplicate Google Cloud Service '{service.name}' in database")
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
 
     conn.close()
-
-    logger.success(f"{len(db_service_stored)} Google Cloud Services stored in database")
 
 
 def search_services(service_name: str) -> None:
