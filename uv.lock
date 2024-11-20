@@ -72,12 +72,23 @@ wheels = [
 ]
 
 [[package]]
+name = "colorama"
+version = "0.4.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335 },
+]
+
+[[package]]
 name = "gcp-iam-roles"
-version = "2024.11.12"
+version = "2024.11.20.post832"
 source = { editable = "." }
 dependencies = [
     { name = "argcomplete" },
     { name = "google-cloud-iam" },
+    { name = "google-cloud-service-usage" },
+    { name = "loguru" },
     { name = "prettytable" },
 ]
 
@@ -90,6 +101,8 @@ dev = [
 requires-dist = [
     { name = "argcomplete", specifier = ">=3.5.1" },
     { name = "google-cloud-iam", specifier = ">=2.16.0" },
+    { name = "google-cloud-service-usage", specifier = ">=1.11.1" },
+    { name = "loguru", specifier = ">=0.7.2" },
     { name = "prettytable", specifier = ">=3.12.0" },
 ]
 
@@ -146,6 +159,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/87/ab/6213c921d118dafdeb78d10b09c8a1a659164bce0a625b6720d14860db75/google_cloud_iam-2.16.0.tar.gz", hash = "sha256:c73fcdf59ff058241957e947e11d2c16c8f2863ba79a4b40f068ba62a1bf7cea", size = 230049 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/ba/9a5ac528fe0b5d934432b899c1411b36fb7208e4462d2ec31557e30f722a/google_cloud_iam-2.16.0-py2.py3-none-any.whl", hash = "sha256:e70cea6a1216f887267f66053331a6dba5e98baf8dc41265a2e928e1b05e0a79", size = 214736 },
+]
+
+[[package]]
+name = "google-cloud-service-usage"
+version = "1.11.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0f/6c/3d3ca57d998baa1b4b51c5a8dd23f700b87079087b5689840d81ea17e669/google_cloud_service_usage-1.11.1.tar.gz", hash = "sha256:84326984105d4de42314dee4ec1d40571e71d5f4ff0009b2557a79e33981e721", size = 58135 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3c/42/abde2ed965e378e7167685cbbae1b74672340947e12873f3009f137e4ca5/google_cloud_service_usage-1.11.1-py2.py3-none-any.whl", hash = "sha256:379ba5538c0a948c5b45cc9cb8fc83c96eb7ef0a597627f8b3ff8808881541d3", size = 57653 },
 ]
 
 [[package]]
@@ -226,6 +254,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442 },
+]
+
+[[package]]
+name = "loguru"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9e/30/d87a423766b24db416a46e9335b9602b054a72b96a88a241f2b09b560fa8/loguru-0.7.2.tar.gz", hash = "sha256:e671a53522515f34fd406340ee968cb9ecafbc4b36c679da03c18fd8d0bd51ac", size = 145103 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/0a/4f6fed21aa246c6b49b561ca55facacc2a44b87d65b8b92362a8e99ba202/loguru-0.7.2-py3-none-any.whl", hash = "sha256:003d71e3d3ed35f0f8984898359d65b79e5b21943f78af86aa5491210429b8eb", size = 62549 },
 ]
 
 [[package]]
@@ -355,4 +396,13 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6c/63/53559446a878410fc5a5974feb13d31d78d752eb18aeba59c7fef1af7598/wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5", size = 101301 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/84/fd2ba7aafacbad3c4201d395674fc6348826569da3c0937e75505ead3528/wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859", size = 34166 },
+]
+
+[[package]]
+name = "win32-setctime"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/dd/f95a13d2b235a28d613ba23ebad55191514550debb968b46aab99f2e3a30/win32_setctime-1.1.0.tar.gz", hash = "sha256:15cf5750465118d6929ae4de4eb46e8edae9a5634350c01ba582df868e932cb2", size = 3676 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/e6/a7d828fef907843b2a5773ebff47fb79ac0c1c88d60c0ca9530ee941e248/win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad", size = 3604 },
 ]

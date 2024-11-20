@@ -1,6 +1,9 @@
 {
   "cSpell.words": [
     "argcomplete",
-    "shellcode"
+    "pycache",
+    "pyproject",
+    "shellcode",
+    "venv"
   ]
 }

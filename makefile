@@ -29,12 +29,12 @@ help: setup
 
 setup: $(uv_bin) .gitignore tmp .venv uv.lock
 
-test-role: setup
+test:
 	uv run gcp-iam-roles --role roles/editor
 	uv run gcp-iam-roles --role vertex
-
-test-permissions: setup
-	gcp-iam-roles --p compute.addresses.createTagBinding
+	uv run gcp-iam-roles --permission compute.addresses.createTagBinding
+	uv run gcp-iam-roles --service actions
+	uv run gcp-iam-roles --status
 
 run:
 	uv run $(NAME)
