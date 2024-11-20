@@ -21,7 +21,7 @@ def get_services(project_id: str) -> None:
     """
 
     page_size = 10
-    delay = 2
+    delay = 5
 
     logger.info("Getting Google Cloud Services...")
 
