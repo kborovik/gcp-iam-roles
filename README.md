@@ -11,7 +11,7 @@ This application help to query Google Cloud Platform IAM Roles and Permissions. 
 Download the latest version from [GitHub Releases](https://github.com/kborovik/gcp-iam-roles/releases).
 
 ```shell
-pipx install gcp_iam_roles-2024.11.12-py3-none-any.whl
+pipx install gcp_iam_roles-<version>-py3-none-any.whl
 ```
 
 # Usage
