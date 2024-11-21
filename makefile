@@ -88,7 +88,7 @@ uv.lock: pyproject.toml
 requirements.txt: uv.lock
 	uv pip freeze --exclude-editable --color never >| $(@)
 
-version:
+version: setup
 	$(eval pre_release := $(shell date '+%H%M' | sed 's/^0*//'))
 	$(eval version := $(shell date '+%Y.%m.%d.post$(pre_release)'))
 	set -e
@@ -96,7 +96,7 @@ version:
 	uv sync --inexact
 	git add --all
 
-commit: version
+commit: setup
 	set -e
 	ruff format --check .
 	ruff check .
