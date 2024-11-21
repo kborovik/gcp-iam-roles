@@ -82,6 +82,10 @@ def store_permissions() -> None:
                 logger.warning("Operation cancelled by user")
                 sys.exit(130)
 
+        logger.success(
+            f"Saved {len(role_permissions.permissions)} permissions for role: {role_name}"
+        )
+
     conn.close()
 
 
@@ -102,5 +106,5 @@ def search_permissions(permission_name: str) -> None:
         print(table)
     except sqlite3.Error as e:
         print(f"SQLite Error: {e}")
-    finally:
-        conn.close()
+
+    conn.close()
