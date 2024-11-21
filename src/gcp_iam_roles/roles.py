@@ -69,7 +69,7 @@ def store_roles(roles: List[Role]) -> None:
                 continue
         conn.commit()
     except sqlite3.Error as error:
-        logger.error("SQLite Error", error)
+        logger.error(f"SQLite Error: {error}")
     except KeyboardInterrupt:
         logger.warning("Operation cancelled by user")
         sys.exit(130)
@@ -95,6 +95,6 @@ def search_roles(role_name: str) -> None:
         table.align = "l"
         print(table)
     except sqlite3.Error as error:
-        logger.error("SQLite Error: ", error)
+        logger.error(f"SQLite Error: {error}")
 
     conn.close()

@@ -50,7 +50,7 @@ def create_db() -> None:
         conn.commit()
         logger.success("Created tables: roles, permissions, services")
     except sqlite3.OperationalError as error:
-        logger.error("Error creating table: ", error)
+        logger.error(f"Error creating table: {error}")
 
     conn.close()
 
@@ -74,7 +74,7 @@ def clear_db() -> None:
         conn.commit()
         logger.success("Dropped tables: roles, permissions, services")
     except sqlite3.OperationalError as error:
-        logger.error("SQLite Error: ", error)
+        logger.error(f"SQLite Error: {error}")
 
     conn.close()
 
@@ -101,6 +101,6 @@ def status_db() -> None:
         table.align = "l"
         print(table)
     except sqlite3.Error as error:
-        logger.error("SQLite Error: ", error)
+        logger.error(f"SQLite Error: {error}")
 
     conn.close()

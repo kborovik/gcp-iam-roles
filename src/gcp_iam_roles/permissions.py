@@ -51,14 +51,14 @@ def store_permissions() -> None:
         cursor.execute("SELECT role FROM roles ORDER BY role;")
         roles_in_db = cursor.fetchall()
     except sqlite3.Error as error:
-        logger.error("SQLite Error: ", error)
+        logger.error(f"SQLite Error: {error}")
     # Get all permissions from the database
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT DISTINCT role FROM permissions ORDER BY role;")
         permissions_in_db = cursor.fetchall()
     except sqlite3.Error as error:
-        logger.error("SQLite Error: ", error)
+        logger.error(f"SQLite Error: {error}")
     # Check what role-permission pairs are missing in 'permissions' table
     db_role_names = {role[0] for role in roles_in_db}
     db_permission_names = {permission[0] for permission in permissions_in_db}
@@ -74,10 +74,10 @@ def store_permissions() -> None:
                 )
                 conn.commit()
             except sqlite3.IntegrityError as error:
-                logger.warning("SQLite IntegrityError: ", error)
+                logger.warning(f"SQLite IntegrityError: {error}")
                 continue
             except sqlite3.Error as error:
-                logger.error("SQLite Error: ", error)
+                logger.error(f"SQLite Error: {error}")
             except KeyboardInterrupt:
                 logger.warning("Operation cancelled by user")
                 sys.exit(130)
