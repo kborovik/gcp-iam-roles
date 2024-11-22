@@ -87,8 +87,12 @@ def search_services(service_name: str) -> None:
         )
         table = from_db_cursor(cursor)
         table.align = "l"
-        print(table)
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
+
+    try:
+        print(table)
+    except BrokenPipeError:
+        pass
 
     conn.close()

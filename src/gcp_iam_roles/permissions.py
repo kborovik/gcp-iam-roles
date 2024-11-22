@@ -103,8 +103,12 @@ def search_permissions(permission_name: str) -> None:
         )
         table = from_db_cursor(cursor)
         table.align = "l"
-        print(table)
     except sqlite3.Error as e:
         print(f"SQLite Error: {e}")
+
+    try:
+        print(table)
+    except BrokenPipeError:
+        pass
 
     conn.close()

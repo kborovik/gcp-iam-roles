@@ -37,6 +37,7 @@ run:
 	uv run $(NAME)
 
 build: setup
+	rm -rf dist/*
 	uv build --wheel
 
 clean:
