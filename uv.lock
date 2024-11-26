@@ -82,7 +82,7 @@ wheels = [
 
 [[package]]
 name = "gcp-iam-roles"
-version = "2024.11.22"
+version = "2024.11.26"
 source = { editable = "." }
 dependencies = [
     { name = "argcomplete" },

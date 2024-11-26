@@ -14,6 +14,7 @@ from .config import DB_FILE
 class Role:
     name: str
     title: str
+    description: str
     stage: str
 
 
@@ -35,6 +36,7 @@ def get_roles() -> List[Role]:
             Role(
                 name=role.name,
                 title=role.title,
+                description=role.description,
                 stage=role.stage.name,
             )
         )
@@ -60,8 +62,8 @@ def store_roles(roles: List[Role]) -> None:
         for role in roles:
             try:
                 cursor.execute(
-                    "INSERT INTO roles (role, title, stage) VALUES (?, ?, ?)",
-                    (role.name, role.title, role.stage),
+                    "INSERT INTO roles (role, title, description, stage) VALUES (?, ?, ?, ?)",
+                    (role.name, role.title, role.description, role.stage),
                 )
                 new_roles.append(role)
             except sqlite3.IntegrityError:
@@ -88,11 +90,17 @@ def search_roles(role_name: str) -> None:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT role,title,stage FROM roles WHERE role LIKE ? OR title LIKE ? ORDER BY role;",
-            (f"%{role_name}%", f"%{role_name}%"),
+            """SELECT role,title
+            FROM roles
+            WHERE role LIKE ? OR title LIKE ? OR description LIKE ?
+            ORDER BY role;
+            """,
+            (f"%{role_name}%", f"%{role_name}%", f"%{role_name}%"),
         )
         table = from_db_cursor(cursor)
         table.align = "l"
+        table._max_width = {"role": 60}
+        table._max_width = {"title": 100}
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
 

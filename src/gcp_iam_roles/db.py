@@ -22,6 +22,7 @@ def create_db() -> None:
             CREATE TABLE IF NOT EXISTS roles (
             role TEXT PRIMARY KEY,
             title TEXT,
+            description TEXT,
             stage TEXT,
             created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
