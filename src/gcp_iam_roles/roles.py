@@ -90,7 +90,8 @@ def search_roles(role_name: str) -> None:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            """SELECT role,title
+            """
+            SELECT role, title
             FROM roles
             WHERE role LIKE ? OR title LIKE ? OR description LIKE ?
             ORDER BY role;
@@ -99,8 +100,7 @@ def search_roles(role_name: str) -> None:
         )
         table = from_db_cursor(cursor)
         table.align = "l"
-        table._max_width = {"role": 60}
-        table._max_width = {"title": 100}
+        table.max_width = 160
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
 

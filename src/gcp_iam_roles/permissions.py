@@ -98,11 +98,17 @@ def search_permissions(permission_name: str) -> None:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT role,permission FROM permissions WHERE permission LIKE ? ORDER BY permission, role;",
+            """
+            SELECT role, permission
+            FROM permissions
+            WHERE permission LIKE ?
+            ORDER BY permission, role;
+            """,
             (f"%{permission_name}%",),
         )
         table = from_db_cursor(cursor)
         table.align = "l"
+        table.max_width = 160
     except sqlite3.Error as e:
         print(f"SQLite Error: {e}")
 
