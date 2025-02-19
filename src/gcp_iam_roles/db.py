@@ -8,9 +8,8 @@ from . import DB_FILE
 
 
 def create_db() -> None:
-    """
-    Creates a SQLite database table to store Google Cloud IAM predefined roles.
-    """
+    """Creates a SQLite database table to store Google Cloud IAM predefined roles."""
+
     conn = sqlite3.connect(DB_FILE.as_uri())
 
     try:
@@ -53,9 +52,8 @@ def create_db() -> None:
 
 
 def clear_db() -> None:
-    """
-    Drops the SQLite database table that stores Google Cloud IAM predefined roles.
-    """
+    """Drops the SQLite database table that stores Google Cloud IAM predefined roles."""
+
     prompt = input("**WARNING!** This will delete all data in the database. Continue? (y/N): ")
     if prompt.lower() != "y":
         print("Aborting...")
@@ -75,9 +73,7 @@ def clear_db() -> None:
 
 
 def status_db() -> None:
-    """
-    Prints the number of roles and permissions in the SQLite database table.
-    """
+    """Prints the number of roles and permissions in the SQLite database table."""
 
     conn = sqlite3.connect(DB_FILE.as_uri())
 

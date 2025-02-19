@@ -17,6 +17,7 @@ class RolePermissions:
 
 def get_permissions(role_name: str) -> RolePermissions | None:
     """Retrieves a list of all permissions associated with a given IAM role."""
+
     logger.info(f"Getting permissions for role: {role_name}")
 
     client = iam_admin_v1.IAMClient()
@@ -36,6 +37,7 @@ def get_permissions(role_name: str) -> RolePermissions | None:
 
 def sync_permissions() -> None:
     """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
+
     conn = sqlite3.connect(DB_FILE.as_uri())
     # Get roles without permissions from the database
     try:
@@ -79,9 +81,8 @@ def sync_permissions() -> None:
 
 
 def search_permissions(permission_name: str) -> None:
-    """
-    Searches for a Google Cloud IAM predefined permission in the SQLite database table.
-    """
+    """Searches for a Google Cloud IAM predefined permission in the SQLite database table."""
+
     from contextlib import suppress
 
     conn = sqlite3.connect(DB_FILE.as_uri())

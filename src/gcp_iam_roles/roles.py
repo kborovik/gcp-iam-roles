@@ -18,9 +18,7 @@ class Role:
 
 
 def get_roles() -> list[Role]:
-    """
-    Retrieves a list of all predefined IAM roles in the current Google Cloud project.
-    """
+    """Retrieves a list of all predefined IAM roles in the current Google Cloud project."""
 
     roles: list[Role] = []
 
@@ -46,9 +44,8 @@ def get_roles() -> list[Role]:
 
 
 def sync_roles() -> None:
-    """
-    Inserts a list of Google Cloud IAM predefined roles into a SQLite database table.
-    """
+    """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
+
     conn = sqlite3.connect(DB_FILE.as_uri())
 
     roles = get_roles()
@@ -83,9 +80,8 @@ def sync_roles() -> None:
 
 
 def search_roles(role_name: str) -> None:
-    """
-    Searches for a Google Cloud IAM predefined role in the SQLite database table.
-    """
+    """Searches for a Google Cloud IAM predefined role in the SQLite database table."""
+
     from contextlib import suppress
 
     conn = sqlite3.connect(DB_FILE.as_uri())

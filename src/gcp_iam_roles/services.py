@@ -1,7 +1,6 @@
 import sqlite3
 import sys
 import time
-from contextlib import contextmanager
 from dataclasses import dataclass
 
 from google.cloud import service_usage_v1
@@ -17,15 +16,6 @@ class Service:
     title: str
 
 
-@contextmanager
-def get_service_client():
-    client = service_usage_v1.ServiceUsageClient()
-    try:
-        yield client
-    finally:
-        client.close()
-
-
 def sync_services() -> list[Service]:
     """Retrieves a list of all Google Cloud services."""
 
@@ -35,7 +25,9 @@ def sync_services() -> list[Service]:
     page_size = 10
     delay = 5.0
 
-    logger.info("Getting Google Cloud Services. This may take a while...")
+    logger.info(
+        "Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while..."
+    )
 
     _, project_id = get_google_credentials()
 
@@ -93,9 +85,7 @@ def store_services(services: list[Service]) -> None:
 
 
 def search_services(service_name: str) -> None:
-    """
-    Searches for a Google Cloud Services in the SQLite database table.
-    """
+    """Searches for a Google Cloud Services in the SQLite database table."""
     from contextlib import suppress
 
     conn = sqlite3.connect(DB_FILE.as_uri())
