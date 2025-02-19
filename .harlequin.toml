@@ -1,0 +1,19 @@
+default_profile = "linux"
+
+[profiles.linux]
+adapter = "sqlite"
+conn_str = [
+  "/home/kb/.local/share/gcp-iam-roles/gcp-iam-roles.db",
+]
+keymap_name = [ "vscode" ]
+limit = 100000
+theme = "nord"
+
+[profiles.macos]
+adapter = "sqlite"
+conn_str = [
+  "/Users/kb/.local/share/gcp-iam-roles/gcp-iam-roles.db",
+]
+keymap_name = [ "vscode" ]
+limit = 100000
+theme = "nord"

@@ -24,13 +24,36 @@ help: setup
 	echo "  make commit  - Create Git commit"
 	echo "  make release - Build Python Wheel and publish to GitHub"
 
-setup: $(uv_bin) .gitignore tmp .venv uv.lock
+setup: $(uv_bin) .gitignore .venv uv.lock
 
-test:
+test: test-help test-roles test-permissions test-service
+
+test-help:
+	uv run gcp-iam-roles
+	uv run gcp-iam-roles --help
+
+test-roles:
+	uv run gcp-iam-roles --status
 	uv run gcp-iam-roles --role roles/editor
-	uv run gcp-iam-roles --role vertex
+	uv run gcp-iam-roles --role dialogflow
+	uv run gcp-iam-roles --role vvvvvvv
+
+test-permissions:
+	uv run gcp-iam-roles --status
 	uv run gcp-iam-roles --permission compute.addresses.createTagBinding
+	uv run gcp-iam-roles --permission vvvvvvv
+
+test-service:
+	uv run gcp-iam-roles --status
 	uv run gcp-iam-roles --service actions
+	uv run gcp-iam-roles --service xxxxxxx
+
+test-sync-roles:
+	uv run gcp-iam-roles --sync-roles
+	uv run gcp-iam-roles --status
+
+test-sync-services:
+	uv run gcp-iam-roles --sync-services
 	uv run gcp-iam-roles --status
 
 run:
@@ -41,7 +64,7 @@ build: setup
 	uv build --wheel
 
 clean:
-	rm -rf .venv uv.lock requirements.txt build/ dist/ *.egg-info/
+	rm -rf .venv uv.lock requirements.txt build/ dist/ *.egg-info/ src/gcp_iam_roles/__pycache__/
 
 uv_bin := $(HOME)/.cargo/bin/uv
 
@@ -56,35 +79,15 @@ $(uv_bin):
 	**/tmp/
 	EOF
 
-tmp:
-	mkdir -p $(@)
-
 .venv:
 	uv venv
-
-define INIT_PY
-from .__main__ import main
-__all__ = ["main", "$(MODULE)"]
-endef
-
-define MAIN_PY
-def main() -> None:
-    print("Hello world!")
-if __name__ == "__main__":
-    main()
-endef
-
-src-init:
-	echo "$$INIT_PY" >| src/$(MODULE)/__init__.py
-	echo "$$MAIN_PY" >| src/$(MODULE)/__main__.py
-	ruff format .
 
 pyproject.toml:
 	uv init --package
 	uv add --dev ruff
 
 uv.lock: pyproject.toml
-	uv sync --inexact && touch $(@)
+	uv sync && touch $(@)
 
 requirements.txt: uv.lock
 	uv pip freeze --exclude-editable --color never >| $(@)
@@ -94,7 +97,7 @@ version: setup
 	$(eval version := $(shell date '+%Y.%m.%d.post$(pre_release)'))
 	set -e
 	sed -i 's/version = "[0-9]\+\.[0-9]\+\.[0-9]\+.*"/version = "$(version)"/' pyproject.toml
-	uv sync --inexact
+	uv sync
 	git add --all
 
 commit: setup

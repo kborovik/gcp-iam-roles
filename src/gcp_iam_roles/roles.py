@@ -1,13 +1,12 @@
 import sqlite3
 import sys
 from dataclasses import dataclass
-from typing import List
 
 from google.cloud import iam_admin_v1
 from loguru import logger
 from prettytable import from_db_cursor
 
-from .config import DB_FILE
+from . import DB_FILE
 
 
 @dataclass
@@ -18,12 +17,12 @@ class Role:
     stage: str
 
 
-def get_roles() -> List[Role]:
+def get_roles() -> list[Role]:
     """
     Retrieves a list of all predefined IAM roles in the current Google Cloud project.
     """
 
-    roles: List[Role] = []
+    roles: list[Role] = []
 
     logger.info("Getting Google Cloud Predefined Roles...")
 
@@ -46,11 +45,13 @@ def get_roles() -> List[Role]:
     return roles
 
 
-def store_roles(roles: List[Role]) -> None:
+def sync_roles() -> None:
     """
     Inserts a list of Google Cloud IAM predefined roles into a SQLite database table.
     """
     conn = sqlite3.connect(DB_FILE.as_uri())
+
+    roles = get_roles()
 
     new_roles = []
     old_roles = []
@@ -85,6 +86,8 @@ def search_roles(role_name: str) -> None:
     """
     Searches for a Google Cloud IAM predefined role in the SQLite database table.
     """
+    from contextlib import suppress
+
     conn = sqlite3.connect(DB_FILE.as_uri())
 
     try:
@@ -104,9 +107,7 @@ def search_roles(role_name: str) -> None:
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
 
-    try:
+    with suppress(BrokenPipeError):
         print(table)
-    except BrokenPipeError:
-        pass
 
     conn.close()

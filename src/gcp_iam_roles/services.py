@@ -1,12 +1,14 @@
 import sqlite3
+import sys
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 from google.cloud import service_usage_v1
 from loguru import logger
 from prettytable import from_db_cursor
 
-from .config import DB_FILE
+from . import DB_FILE
 
 
 @dataclass
@@ -15,60 +17,77 @@ class Service:
     title: str
 
 
-def get_services(project_id: str) -> None:
-    """
-    Retrieves a list of all Google Cloud services.
-    """
+@contextmanager
+def get_service_client():
+    client = service_usage_v1.ServiceUsageClient()
+    try:
+        yield client
+    finally:
+        client.close()
 
+
+def sync_services() -> list[Service]:
+    """Retrieves a list of all Google Cloud services."""
+
+    from .auth import get_google_credentials
+
+    services = []
     page_size = 10
-    delay = 5
+    delay = 5.0
 
-    logger.info("Getting Google Cloud Services...")
+    logger.info("Getting Google Cloud Services. This may take a while...")
+
+    _, project_id = get_google_credentials()
 
     client = service_usage_v1.ServiceUsageClient()
     request = service_usage_v1.ListServicesRequest(
         parent=f"projects/{project_id}", page_size=page_size
     )
+
     try:
-        page_results = client.list_services(request=request)
-        for page in page_results.pages:
-            for service in page.services:
-                if service.config.name.endswith("googleapis.com"):
-                    service = Service(
-                        name=service.config.name,
-                        title=service.config.title,
-                    )
-                    logger.info(f"Found Google Cloud Services '{service.name}'")
-                    store_services(service)
+        for page in client.list_services(request=request).pages:
+            batch = [
+                Service(name=svc.config.name, title=svc.config.title)
+                for svc in page.services
+                if svc.config.name.endswith("googleapis.com")
+            ]
+            logger.info(
+                f"Found {len(batch)} Google Cloud Services. Total: {len(services) + len(batch)}"
+            )
+            if batch:
+                services.extend(batch)
+                store_services(batch)
             time.sleep(delay)
     except Exception as error:
         logger.error(f"Error getting Google Cloud Services: {error}")
+        raise
     except KeyboardInterrupt:
         logger.warning("Operation cancelled by user")
+        sys.exit(130)
+
+    return services
 
 
-def store_services(service: Service) -> None:
-    """
-    Inserts a list of Google Cloud services into a SQLite database table.
-    """
+def store_services(services: list[Service]) -> None:
+    """Inserts a list of Google Cloud services into a SQLite database table."""
 
     conn = sqlite3.connect(DB_FILE.as_uri())
 
     try:
         cursor = conn.cursor()
-        cursor.execute(
+        cursor.executemany(
             "INSERT INTO services (service, title) VALUES (?, ?)",
-            (
-                service.name,
-                service.title,
-            ),
+            [(service.name, service.title) for service in services],
         )
         conn.commit()
-        logger.success(f"Saved Google Cloud Service '{service.name}' in database")
+        logger.success(f"Saved {len(services)} Google Cloud Services in database")
     except sqlite3.IntegrityError:
-        logger.warning(f"Duplicate Google Cloud Service '{service.name}' in database")
+        logger.warning("Duplicate Google Cloud Services in database")
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
+    except KeyboardInterrupt:
+        logger.warning("Operation cancelled by user")
+        sys.exit(130)
 
     conn.close()
 
@@ -77,6 +96,8 @@ def search_services(service_name: str) -> None:
     """
     Searches for a Google Cloud Services in the SQLite database table.
     """
+    from contextlib import suppress
+
     conn = sqlite3.connect(DB_FILE.as_uri())
 
     try:
@@ -90,9 +111,11 @@ def search_services(service_name: str) -> None:
     except sqlite3.Error as error:
         logger.error(f"SQLite Error: {error}")
 
-    try:
+    with suppress(BrokenPipeError):
         print(table)
-    except BrokenPipeError:
-        pass
 
     conn.close()
+
+
+if __name__ == "__main__":
+    sync_services()

@@ -1,33 +1,15 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
   "configurations": [
     {
-      "name": "no-args",
+      "name": "CurrentFile",
       "type": "debugpy",
       "request": "launch",
-      "module": "gcp_iam_roles",
-    },
-    {
-      "name": "init-db",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "gcp_iam_roles",
-      "args": [
-        "--init-db",
-      ]
-    },
-    {
-      "name": "role",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "gcp_iam_roles",
-      "args": [
-        "--role",
-        "compute",
-      ]
+      "module": "gcp_iam_roles.${fileBasenameNoExtension}",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceRoot}:${PYTHONPATH}",
+        "VIRTUAL_ENV": "${workspaceRoot}/.venv"
+      },
     }
   ]
 }

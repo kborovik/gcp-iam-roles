@@ -1,12 +1,11 @@
 import sys
-from typing import Tuple
 
 import google.auth
 from google.auth.credentials import Credentials
 from loguru import logger
 
 
-def get_google_credentials() -> Tuple[Credentials, str]:
+def get_google_credentials() -> tuple[Credentials, str]:
     try:
         credentials, project_id = google.auth.default()
         credentials.refresh(google.auth.transport.requests.Request())
