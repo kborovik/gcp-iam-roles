@@ -17,6 +17,9 @@ class RolePermissions:
 
 def get_permissions(role_name: str) -> RolePermissions | None:
     """Retrieves a list of all permissions associated with a given IAM role."""
+    from .auth import get_google_credentials
+
+    get_google_credentials()
 
     logger.info(f"Getting permissions for role: {role_name}")
 
@@ -108,3 +111,7 @@ def search_permissions(permission_name: str) -> None:
         print(table)
 
     conn.close()
+
+
+if __name__ == "__main__":
+    sync_permissions()

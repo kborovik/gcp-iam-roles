@@ -19,6 +19,9 @@ class Role:
 
 def get_roles() -> list[Role]:
     """Retrieves a list of all predefined IAM roles in the current Google Cloud project."""
+    from .auth import get_google_credentials
+
+    get_google_credentials()
 
     roles: list[Role] = []
 
@@ -107,3 +110,7 @@ def search_roles(role_name: str) -> None:
         print(table)
 
     conn.close()
+
+
+if __name__ == "__main__":
+    sync_roles()

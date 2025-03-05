@@ -13,7 +13,7 @@ description = "Query GCP IAM roles and permissions"
 name = "gcp-iam-roles"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2025.02.19"
+version = "2025.03.05.post1155"
 
 [project.scripts]
 gcp-iam-roles = "gcp_iam_roles:cli"
