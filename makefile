@@ -114,7 +114,7 @@ release: setup
 	git add --all
 	rm -rf dist/
 	uv build --wheel
-	gpg --detach-sign dist/*.whl
+	gpg -b -u E4AFCA7FBB19FC029D519A524AEBB5178D5E96C1 dist/*.whl
 	git commit -m "Release: $(NAME) v$(version)" || true
 	git push origin main
 	gh release create $(version) --title "$(version)" --generate-notes ./dist/*.*

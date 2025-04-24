@@ -1,7 +1,5 @@
 [project]
-authors = [
-  { name = "Konstantin Borovik", email = "kb@lab5.ca" },
-]
+authors = [{ name = "Konstantin Borovik", email = "kb@lab5.ca" }]
 dependencies = [
   "argcomplete>=3.5.1",
   "google-cloud-iam>=2.16.0",
@@ -12,27 +10,25 @@ dependencies = [
 description = "Query GCP IAM roles and permissions"
 name = "gcp-iam-roles"
 readme = "README.md"
-requires-python = ">=3.12"
-version = "2025.03.05"
+requires-python = "~=3.13.3"
+version = "2025.04.24.post1614"
 
 [project.scripts]
 gcp-iam-roles = "gcp_iam_roles:cli"
 
 [build-system]
 build-backend = "hatchling.build"
-requires = [ "hatchling" ]
+requires = ["hatchling"]
 
 [dependency-groups]
-dev = [
-  "ruff>=0.7.3",
-]
+dev = ["ruff>=0.7.3"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
-select = [ "C90", "F", "N", "N", "PL", "RUF", "SIM", "UP" ]
+select = ["C90", "F", "N", "N", "PL", "RUF", "SIM", "UP"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
