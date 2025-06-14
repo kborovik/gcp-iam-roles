@@ -13,7 +13,7 @@ from rich.console import Console
 from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
 from .permissions import search_permissions, sync_permissions
-from .roles import search_roles, sync_roles
+from .roles import diff_roles, search_roles, sync_roles
 from .services import search_services, sync_services
 
 create_db()
@@ -53,17 +53,21 @@ def role(
     sync: bool = typer.Option(
         False, "--sync", help="Sync predefined IAM roles and permissions from Google Cloud APIs"
     ),
+    diff: list[str] = typer.Option(
+        [], "--diff", help="Compare permissions between two roles (use --diff role1 --diff role2)"
+    ),
 ) -> None:
     """
     Manage GCP IAM roles.
 
-    Search for existing roles or sync the latest roles from Google Cloud.
+    Search for existing roles, sync the latest roles from Google Cloud, or compare permissions between roles.
 
     Examples:
 
       gcp-iam-roles role --search viewer
       gcp-iam-roles role --search compute
       gcp-iam-roles role --sync
+      gcp-iam-roles role --diff compute.viewer --diff storage.viewer
 
     Notes:
 
@@ -71,6 +75,7 @@ def role(
       • Sync requires authentication: gcloud auth login --update-adc
       • Role names displayed without 'roles/' prefix for cleaner output
       • Sync operation may take several minutes to complete
+      • Diff compares permissions between two roles stored in the local database
     """
     if search:
         search_roles(search)
@@ -79,6 +84,13 @@ def role(
         create_db()
         sync_roles()
         sync_permissions()
+    elif diff:
+        diff_size = 2
+        if len(diff) != diff_size:
+            console.print("[red]Error: --diff requires exactly two role names[/red]")
+            console.print("Example: gcp-iam-roles role --diff compute.viewer --diff storage.viewer")
+            raise typer.Exit(1)
+        diff_roles(diff[0], diff[1])
     else:
         # Show help when no options are provided
         console.print(ctx.get_help())

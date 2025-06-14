@@ -116,5 +116,105 @@ def search_roles(role_name: str) -> None:
     conn.close()
 
 
+def _get_role_permissions(cursor: sqlite3.Cursor, role_name: str) -> set[str]:
+    """Get permissions for a role from the database."""
+    cursor.execute(
+        "SELECT permission FROM permissions WHERE role = ? ORDER BY permission", (role_name,)
+    )
+    return {row[0] for row in cursor.fetchall()}
+
+
+def _validate_roles_exist(
+    role1: str, role2: str, role1_perms: set[str], role2_perms: set[str]
+) -> bool:
+    """Validate that both roles exist in the database."""
+    if not role1_perms and not role2_perms:
+        console.print(f"[red]Neither role '{role1}' nor '{role2}' found in database[/red]")
+        return False
+    elif not role1_perms:
+        console.print(f"[red]Role '{role1}' not found in database[/red]")
+        return False
+    elif not role2_perms:
+        console.print(f"[red]Role '{role2}' not found in database[/red]")
+        return False
+    return True
+
+
+def diff_roles(role1: str, role2: str) -> None:
+    """Compares permissions between two GCP IAM roles and displays the differences."""
+    from contextlib import suppress
+
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+
+        role1_permissions = _get_role_permissions(cursor, role1)
+        role2_permissions = _get_role_permissions(cursor, role2)
+
+        if not _validate_roles_exist(role1, role2, role1_permissions, role2_permissions):
+            return
+
+        # Calculate differences
+        only_in_role1 = role1_permissions - role2_permissions
+        only_in_role2 = role2_permissions - role1_permissions
+        common_permissions = role1_permissions & role2_permissions
+
+        # Create summary table
+        summary_table = Table(title=f"[bold cyan]Role Comparison: {role1} vs {role2}[/bold cyan]")
+        summary_table.add_column("Category", justify="left", style="yellow")
+        summary_table.add_column("Count", justify="right", style="green")
+
+        summary_table.add_row("Common Permissions", str(len(common_permissions)))
+        summary_table.add_row(f"Only in {role1}", str(len(only_in_role1)))
+        summary_table.add_row(f"Only in {role2}", str(len(only_in_role2)))
+        summary_table.add_row(
+            "Total Unique Permissions", str(len(role1_permissions | role2_permissions))
+        )
+
+        console.print(summary_table)
+        console.print()
+
+        # Show permissions only in role1
+        if only_in_role1:
+            role1_table = Table(
+                title=f"[bold red]Permissions only in '{role1}' ({len(only_in_role1)} permissions)[/bold red]"
+            )
+            role1_table.add_column("Permission", justify="left", style="red", max_width=80)
+            for permission in sorted(only_in_role1):
+                role1_table.add_row(permission)
+            console.print(role1_table)
+            console.print()
+
+        # Show permissions only in role2
+        if only_in_role2:
+            role2_table = Table(
+                title=f"[bold blue]Permissions only in '{role2}' ({len(only_in_role2)} permissions)[/bold blue]"
+            )
+            role2_table.add_column("Permission", justify="left", style="blue", max_width=80)
+            for permission in sorted(only_in_role2):
+                role2_table.add_row(permission)
+            console.print(role2_table)
+            console.print()
+
+        # Show common permissions if there are any
+        if common_permissions:
+            common_table = Table(
+                title=f"[bold green]Common Permissions ({len(common_permissions)} permissions)[/bold green]"
+            )
+            common_table.add_column("Permission", justify="left", style="green", max_width=80)
+            for permission in sorted(common_permissions):
+                common_table.add_row(permission)
+            console.print(common_table)
+
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
+
+    with suppress(BrokenPipeError):
+        pass
+
+    conn.close()
+
+
 if __name__ == "__main__":
     sync_roles()
