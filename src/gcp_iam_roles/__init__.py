@@ -10,7 +10,7 @@ import argparse
 import sys
 
 import argcomplete
-from loguru import logger
+from rich.console import Console
 
 from .db import clear_db, create_db, status_db
 from .permissions import search_permissions, sync_permissions
@@ -19,20 +19,10 @@ from .services import search_services, sync_services
 
 create_db()
 
+console = Console()
+
 
 def cli() -> None:
-    logger.remove()
-    logger.level("ERROR", color="<red>")
-    logger.level("WARNING", color="<yellow>")
-    logger.level("INFO", color="<blue>")
-    logger.level("SUCCESS", color="<green>")
-    logger.level("DEBUG", color="<cyan>")
-    logger.add(
-        sink=sys.stdout,
-        enqueue=True,
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | <level>{level: <7}</level> | <level>{message}</level>",
-    )
-
     parser = argparse.ArgumentParser(description="Search Google Cloud IAM roles and permissions")
 
     parser.add_argument(
@@ -75,12 +65,6 @@ def cli() -> None:
     )
 
     parser.add_argument(
-        "--bash-completion",
-        action="store_true",
-        help="Generate bash completion",
-    )
-
-    parser.add_argument(
         "--clear-db",
         action="store_true",
         help="Drop database tables",
@@ -109,16 +93,6 @@ def cli() -> None:
 
     elif args.status:
         status_db()
-
-    elif args.bash_completion:
-        completion_dir = Path.home().joinpath(".local", "share", "bash-completion", "completions")
-        completion_dir.mkdir(parents=True, exist_ok=True)
-        completion_file = completion_dir.joinpath(package_name)
-        completion_file.write_text(
-            f'#!/usr/bin/env bash\neval "$(register-python-argcomplete {package_name})"'
-        )
-        logger.info(f"Bash completion installed to {completion_file}")
-        sys.exit(0)
 
     elif args.clear_db:
         clear_db()

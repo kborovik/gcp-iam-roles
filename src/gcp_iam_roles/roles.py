@@ -3,7 +3,9 @@ import sys
 from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
-from loguru import logger
+from rich.console import Console
+
+console = Console()
 from prettytable import from_db_cursor
 
 from . import DB_FILE
@@ -25,7 +27,7 @@ def get_roles() -> list[Role]:
 
     roles: list[Role] = []
 
-    logger.info("Getting Google Cloud Predefined Roles...")
+    console.print("[blue]Getting Google Cloud Predefined Roles...[/blue]")
 
     client = iam_admin_v1.IAMClient()
     request = iam_admin_v1.ListRolesRequest()
@@ -41,7 +43,7 @@ def get_roles() -> list[Role]:
             )
         )
 
-    logger.success("Received {} Google Cloud Predefined Roles", len(roles))
+    console.print(f"[green]Received {len(roles)} Google Cloud Predefined Roles[/green]")
 
     return roles
 
@@ -56,7 +58,7 @@ def sync_roles() -> None:
     new_roles = []
     old_roles = []
 
-    logger.info("Storing roles in database...")
+    console.print("[blue]Storing roles in database...[/blue]")
 
     try:
         cursor = conn.cursor()
@@ -72,14 +74,14 @@ def sync_roles() -> None:
                 continue
         conn.commit()
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     conn.close()
 
-    logger.success("New roles: {}, Existing roles: {}", len(new_roles), len(old_roles))
+    console.print(f"[green]New roles: {len(new_roles)}, Existing roles: {len(old_roles)}[/green]")
 
 
 def search_roles(role_name: str) -> None:
@@ -104,7 +106,7 @@ def search_roles(role_name: str) -> None:
         table.align = "l"
         table.max_width = 160
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
         print(table)

@@ -4,7 +4,9 @@ import time
 from dataclasses import dataclass
 
 from google.cloud import service_usage_v1
-from loguru import logger
+from rich.console import Console
+
+console = Console()
 from prettytable import from_db_cursor
 
 from . import DB_FILE
@@ -25,8 +27,8 @@ def sync_services() -> list[Service]:
     page_size = 10
     delay = 5.0
 
-    logger.info(
-        "Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while..."
+    console.print(
+        "[blue]Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while...[/blue]"
     )
 
     _, project_id = get_google_credentials()
@@ -43,18 +45,18 @@ def sync_services() -> list[Service]:
                 for svc in page.services
                 if svc.config.name.endswith("googleapis.com")
             ]
-            logger.info(
-                f"Found {len(batch)} Google Cloud Services. Total: {len(services) + len(batch)}"
+            console.print(
+                f"[blue]Found {len(batch)} Google Cloud Services. Total: {len(services) + len(batch)}[/blue]"
             )
             if batch:
                 services.extend(batch)
                 store_services(batch)
             time.sleep(delay)
     except Exception as error:
-        logger.error(f"Error getting Google Cloud Services: {error}")
+        console.print(f"[red]Error getting Google Cloud Services: {error}[/red]")
         raise
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     return services
@@ -72,13 +74,13 @@ def store_services(services: list[Service]) -> None:
             [(service.name, service.title) for service in services],
         )
         conn.commit()
-        logger.success(f"Saved {len(services)} Google Cloud Services in database")
+        console.print(f"[green]Saved {len(services)} Google Cloud Services in database[/green]")
     except sqlite3.IntegrityError:
-        logger.warning("Duplicate Google Cloud Services in database")
+        console.print("[yellow]Duplicate Google Cloud Services in database[/yellow]")
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     conn.close()
@@ -99,7 +101,7 @@ def search_services(service_name: str) -> None:
         table = from_db_cursor(cursor)
         table.align = "l"
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
         print(table)

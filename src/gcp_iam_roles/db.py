@@ -1,7 +1,9 @@
 import sqlite3
 import sys
 
-from loguru import logger
+from rich.console import Console
+
+console = Console()
 from prettytable import PrettyTable
 
 from . import DB_FILE
@@ -46,7 +48,7 @@ def create_db() -> None:
         )
         conn.commit()
     except sqlite3.OperationalError as error:
-        logger.error(f"Error creating table: {error}")
+        console.print(f"[red]Error creating table: {error}[/red]")
 
     conn.close()
 
@@ -65,9 +67,9 @@ def clear_db() -> None:
         conn.execute("DROP TABLE IF EXISTS roles;")
         conn.execute("DROP TABLE IF EXISTS services;")
         conn.commit()
-        logger.success("Dropped tables: roles, permissions, services")
+        console.print("[green]Dropped tables: roles, permissions, services[/green]")
     except sqlite3.OperationalError as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     conn.close()
 
@@ -93,7 +95,7 @@ def status_db() -> None:
         table_count.align = "l"
         print(table_count)
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     conn.close()
 

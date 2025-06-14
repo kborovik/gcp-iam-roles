@@ -3,7 +3,9 @@ import sys
 from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
-from loguru import logger
+from rich.console import Console
+
+console = Console()
 from prettytable import from_db_cursor
 
 from . import DB_FILE
@@ -21,7 +23,7 @@ def get_permissions(role_name: str) -> RolePermissions | None:
 
     get_google_credentials()
 
-    logger.info(f"Getting permissions for role: {role_name}")
+    console.print(f"[blue]Getting permissions for role: {role_name}[/blue]")
 
     client = iam_admin_v1.IAMClient()
     role = client.get_role(request=iam_admin_v1.GetRoleRequest(name=role_name))
@@ -29,12 +31,12 @@ def get_permissions(role_name: str) -> RolePermissions | None:
     role_permissions = RolePermissions(role=role.name, permissions=list(role.included_permissions))
 
     if role_permissions.permissions:
-        logger.success(
-            f"Received {len(role_permissions.permissions)} permissions for role: {role_name}"
+        console.print(
+            f"[green]Received {len(role_permissions.permissions)} permissions for role: {role_name}[/green]"
         )
         return role_permissions
     else:
-        logger.warning(f"No permissions found for role: {role_name}")
+        console.print(f"[yellow]No permissions found for role: {role_name}[/yellow]")
         return None
 
 
@@ -54,7 +56,7 @@ def sync_permissions() -> None:
         """)
         roles_without_permissions = [row[0] for row in cursor.fetchall()]
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     # Insert missing role-permission pairs into 'permissions' table
     for role_name in roles_without_permissions:
@@ -68,16 +70,16 @@ def sync_permissions() -> None:
                 "INSERT INTO permissions (permission, role) VALUES (?, ?)", permission_values
             )
         except sqlite3.IntegrityError as error:
-            logger.warning(f"SQLite IntegrityError: {error}")
+            console.print(f"[yellow]SQLite IntegrityError: {error}[/yellow]")
         except sqlite3.Error as error:
-            logger.error(f"SQLite Error: {error}")
+            console.print(f"[red]SQLite Error: {error}[/red]")
         except KeyboardInterrupt:
-            logger.warning("Operation cancelled by user")
+            console.print("[yellow]Operation cancelled by user[/yellow]")
             sys.exit(130)
 
         conn.commit()
-        logger.success(
-            f"Saved {len(role_permissions.permissions)} permissions for role: {role_name}"
+        console.print(
+            f"[green]Saved {len(role_permissions.permissions)} permissions for role: {role_name}[/green]"
         )
 
     conn.close()
