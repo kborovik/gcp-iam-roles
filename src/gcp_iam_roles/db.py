@@ -2,9 +2,9 @@ import sqlite3
 import sys
 
 from rich.console import Console
+from rich.table import Table
 
 console = Console()
-from prettytable import PrettyTable
 
 from . import DB_FILE
 
@@ -40,7 +40,7 @@ def create_db() -> None:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS services (
-            service TEXT PRIMARY KEY, 
+            service TEXT PRIMARY KEY,
             title TEXT,
             created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -87,13 +87,13 @@ def status_db() -> None:
         permissions = cursor.fetchone()[0]
         cursor.execute("SELECT COUNT(DISTINCT service) FROM services;")
         services = cursor.fetchone()[0]
-        table_count = PrettyTable()
-        table_count.field_names = ["Type", "Count"]
-        table_count.add_row(["GCP IAM Roles", roles])
-        table_count.add_row(["GCP IAM Permissions", permissions])
-        table_count.add_row(["GCP Services", services])
-        table_count.align = "l"
-        print(table_count)
+        table_count = Table(title="[bold blue]Database Status[/bold blue]")
+        table_count.add_column("Type", justify="left", style="blue")
+        table_count.add_column("Count", justify="right", style="green")
+        table_count.add_row("GCP IAM Roles", str(roles))
+        table_count.add_row("GCP IAM Permissions", str(permissions))
+        table_count.add_row("GCP Services", str(services))
+        console.print(table_count)
     except sqlite3.Error as error:
         console.print(f"[red]SQLite Error: {error}[/red]")
 

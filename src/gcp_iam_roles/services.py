@@ -5,9 +5,9 @@ from dataclasses import dataclass
 
 from google.cloud import service_usage_v1
 from rich.console import Console
+from rich.table import Table
 
 console = Console()
-from prettytable import from_db_cursor
 
 from . import DB_FILE
 
@@ -97,13 +97,17 @@ def search_services(service_name: str) -> None:
             "SELECT service,title FROM services WHERE service LIKE ? OR title LIKE ? ORDER BY service;",
             (f"%{service_name}%", f"%{service_name}%"),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
+        rows = cursor.fetchall()
+        table = Table(title="[bold green]GCP Services[/bold green]")
+        table.add_column("Service", justify="left", max_width=80, style="blue")
+        table.add_column("Title", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
     except sqlite3.Error as error:
         console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
 
     conn.close()
 

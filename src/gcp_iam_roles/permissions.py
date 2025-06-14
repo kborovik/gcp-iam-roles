@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
 from rich.console import Console
+from rich.table import Table
 
 console = Console()
-from prettytable import from_db_cursor
 
 from . import DB_FILE
 
@@ -45,10 +45,10 @@ def sync_permissions() -> None:
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT r.role 
-            FROM roles r 
-            LEFT JOIN permissions p ON r.role = p.role 
-            WHERE p.role IS NULL 
+            SELECT r.role
+            FROM roles r
+            LEFT JOIN permissions p ON r.role = p.role
+            WHERE p.role IS NULL
             ORDER BY r.role
         """)
         roles_without_permissions = [row[0] for row in cursor.fetchall()]
@@ -100,14 +100,17 @@ def search_permissions(permission_name: str) -> None:
             """,
             (f"%{permission_name}%",),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
-        table.max_width = 160
-    except sqlite3.Error as e:
-        print(f"SQLite Error: {e}")
+        rows = cursor.fetchall()
+        table = Table(title="[bold yellow]GCP IAM Permissions[/bold yellow]")
+        table.add_column("Role", justify="left", max_width=80, style="blue")
+        table.add_column("Permission", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
 
     conn.close()
 

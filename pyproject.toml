@@ -4,7 +4,6 @@ dependencies = [
   "argcomplete>=3.5.1",
   "google-cloud-iam>=2.16.0",
   "google-cloud-service-usage>=1.11.1",
-  "prettytable>=3.12.0",
   "rich>=14.0.0",
 ]
 description = "Query GCP IAM roles and permissions"
@@ -13,8 +12,8 @@ readme = "README.md"
 requires-python = "~=3.13.3"
 version = "2025.06.13.post2322"
 
-# [project.scripts]
-# gcp-iam-roles = "gcp_iam_roles:cli"
+[project.scripts]
+gcp-iam-roles = "gcp_iam_roles:cli"
 
 [build-system]
 build-backend = "hatchling.build"

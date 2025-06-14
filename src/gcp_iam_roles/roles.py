@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
 from rich.console import Console
+from rich.table import Table
 
 console = Console()
-from prettytable import from_db_cursor
 
 from . import DB_FILE
 
@@ -99,14 +99,17 @@ def search_roles(role_name: str) -> None:
             """,
             (f"%{role_name}%", f"%{role_name}%", f"%{role_name}%"),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
-        table.max_width = 160
+        rows = cursor.fetchall()
+        table = Table(title="[bold magenta]GCP IAM Roles[/bold magenta]")
+        table.add_column("Role", justify="left", max_width=80, style="blue")
+        table.add_column("Title", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
     except sqlite3.Error as error:
         console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
 
     conn.close()
 

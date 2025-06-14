@@ -34,8 +34,8 @@ test-help:
 
 test-roles:
 	uv run gcp-iam-roles --status
-	uv run gcp-iam-roles --role roles/editor
-	uv run gcp-iam-roles --role dialogflow
+	uv run gcp-iam-roles --role cloudquotas.viewer
+	uv run gcp-iam-roles --role roles/cloudprofiler.user
 	uv run gcp-iam-roles --role vvvvvvv
 
 test-permissions:
