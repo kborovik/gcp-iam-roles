@@ -63,7 +63,7 @@ def sync_services() -> list[Service]:
 def store_services(services: list[Service]) -> None:
     """Inserts a list of Google Cloud services into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
@@ -88,7 +88,7 @@ def search_services(service_name: str) -> None:
     """Searches for a Google Cloud Services in the SQLite database table."""
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()

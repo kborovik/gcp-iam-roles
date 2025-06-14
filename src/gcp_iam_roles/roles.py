@@ -49,7 +49,7 @@ def get_roles() -> list[Role]:
 def sync_roles() -> None:
     """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     roles = get_roles()
 
@@ -87,7 +87,7 @@ def search_roles(role_name: str) -> None:
 
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
