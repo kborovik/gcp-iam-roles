@@ -44,10 +44,34 @@ def ensure_authenticated() -> object:
 
 @app.command()
 def role(
-    search: str | None = typer.Option(None, "--search", help="Search for roles by name pattern"),
-    sync: bool = typer.Option(False, "--sync", help="Sync predefined IAM roles and permissions"),
+    ctx: typer.Context,
+    search: str | None = typer.Option(
+        None,
+        "--search",
+        help="Search for roles by name pattern (searches role names, titles, and descriptions)",
+    ),
+    sync: bool = typer.Option(
+        False, "--sync", help="Sync predefined IAM roles and permissions from Google Cloud APIs"
+    ),
 ) -> None:
-    """Manage GCP IAM roles."""
+    """
+    Manage GCP IAM roles.
+
+    Search for existing roles or sync the latest roles from Google Cloud.
+
+    Examples:
+
+      gcp-iam-roles role --search viewer
+      gcp-iam-roles role --search compute
+      gcp-iam-roles role --sync
+
+    Notes:
+
+      • Search is case-insensitive and matches role names, titles, and descriptions
+      • Sync requires authentication: gcloud auth login --update-adc
+      • Role names displayed without 'roles/' prefix for cleaner output
+      • Sync operation may take several minutes to complete
+    """
     if search:
         search_roles(search)
     elif sync:
@@ -56,12 +80,14 @@ def role(
         sync_roles()
         sync_permissions()
     else:
-        console.print("[red]Error: Must specify either --search or --sync[/red]")
-        raise typer.Exit(1)
+        # Show help when no options are provided
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 @app.command()
 def permission(
+    ctx: typer.Context,
     search: str | None = typer.Option(
         None, "--search", help="Search for permissions by name pattern"
     ),
@@ -70,12 +96,13 @@ def permission(
     if search:
         search_permissions(search)
     else:
-        console.print("[red]Error: Must specify --search[/red]")
-        raise typer.Exit(1)
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 @app.command()
 def service(
+    ctx: typer.Context,
     search: str | None = typer.Option(None, "--search", help="Search for services by name pattern"),
     sync: bool = typer.Option(False, "--sync", help="Sync Google Cloud services"),
 ) -> None:
@@ -87,8 +114,8 @@ def service(
         create_db()
         sync_services()
     else:
-        console.print("[red]Error: Must specify either --search or --sync[/red]")
-        raise typer.Exit(1)
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 @app.command()
