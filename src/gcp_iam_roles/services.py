@@ -20,8 +20,7 @@ class Service:
 
 def sync_services() -> list[Service]:
     """Retrieves a list of all Google Cloud services."""
-
-    from .auth import get_google_credentials
+    from . import ensure_authenticated
 
     services = []
     page_size = 10
@@ -31,7 +30,7 @@ def sync_services() -> list[Service]:
         "[blue]Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while...[/blue]"
     )
 
-    _, project_id = get_google_credentials()
+    _, project_id = ensure_authenticated()
 
     client = service_usage_v1.ServiceUsageClient()
     request = service_usage_v1.ListServicesRequest(

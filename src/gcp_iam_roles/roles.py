@@ -21,9 +21,6 @@ class Role:
 
 def get_roles() -> list[Role]:
     """Retrieves a list of all predefined IAM roles in the current Google Cloud project."""
-    from .auth import get_google_credentials
-
-    get_google_credentials()
 
     roles: list[Role] = []
 

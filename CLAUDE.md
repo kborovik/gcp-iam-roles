@@ -34,8 +34,10 @@ The application stores data locally in `~/.local/share/gcp-iam-roles/gcp-iam-rol
 ### Code Quality
 - `ruff format --check .` - Check code formatting
 - `ruff check .` - Run linting checks
+- `uvx ruff check` - Lint Python code after every code change
+- `uvx ruff format` - Format Python code after each code change
 
-### Build and Release
+## Build and Release
 - `make build` - Build wheel package in dist/
 - `make clean` - Clean build artifacts and virtual environment
 - `make version` - Update version with timestamp

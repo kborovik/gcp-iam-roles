@@ -12,6 +12,7 @@ import sys
 import argcomplete
 from rich.console import Console
 
+from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
 from .permissions import search_permissions, sync_permissions
 from .roles import search_roles, sync_roles
@@ -20,6 +21,14 @@ from .services import search_services, sync_services
 create_db()
 
 console = Console()
+
+
+# Cache credentials to avoid multiple authentication calls
+def ensure_authenticated():
+    """Ensure Google Cloud credentials are available, caching the result."""
+    if not hasattr(ensure_authenticated, "_cache"):
+        ensure_authenticated._cache = get_google_credentials()
+    return ensure_authenticated._cache
 
 
 def cli() -> None:
@@ -83,11 +92,13 @@ def cli() -> None:
         search_services(args.service[0])
 
     elif args.sync_roles:
+        ensure_authenticated()
         create_db()
         sync_roles()
         sync_permissions()
 
     elif args.sync_services:
+        ensure_authenticated()
         create_db()
         sync_services()
 

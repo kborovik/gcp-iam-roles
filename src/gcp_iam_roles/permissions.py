@@ -19,9 +19,6 @@ class RolePermissions:
 
 def get_permissions(role_name: str) -> RolePermissions | None:
     """Retrieves a list of all permissions associated with a given IAM role."""
-    from .auth import get_google_credentials
-
-    get_google_credentials()
 
     console.print(f"[blue]Getting permissions for role: {role_name}[/blue]")
 
