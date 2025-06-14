@@ -61,9 +61,11 @@ def sync_roles() -> None:
         cursor = conn.cursor()
         for role in roles:
             try:
+                # Strip 'roles/' prefix from role name
+                role_name_clean = role.name.removeprefix("roles/")
                 cursor.execute(
                     "INSERT INTO roles (role, title, description, stage) VALUES (?, ?, ?, ?)",
-                    (role.name, role.title, role.description, role.stage),
+                    (role_name_clean, role.title, role.description, role.stage),
                 )
                 new_roles.append(role)
             except sqlite3.IntegrityError:

@@ -57,10 +57,12 @@ def sync_permissions() -> None:
 
     # Insert missing role-permission pairs into 'permissions' table
     for role_name in roles_without_permissions:
-        role_permissions = get_permissions(role_name)
+        # Add 'roles/' prefix for API call
+        full_role_name = f"roles/{role_name}"
+        role_permissions = get_permissions(full_role_name)
         if not role_permissions:
             continue
-        # Create batch inserts instead of individual ones
+        # Create batch inserts with clean role name (without prefix)
         permission_values = [(permission, role_name) for permission in role_permissions.permissions]
         try:
             cursor.executemany(
