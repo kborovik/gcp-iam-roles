@@ -41,7 +41,7 @@ def get_permissions(role_name: str) -> RolePermissions | None:
 def sync_permissions() -> None:
     """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
     # Get roles without permissions from the database
     try:
         cursor = conn.cursor()
@@ -88,7 +88,7 @@ def search_permissions(permission_name: str) -> None:
 
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()

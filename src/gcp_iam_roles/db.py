@@ -10,7 +10,7 @@ from . import DB_FILE
 def create_db() -> None:
     """Creates a SQLite database table to store Google Cloud IAM predefined roles."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         conn.execute(
@@ -59,7 +59,7 @@ def clear_db() -> None:
         print("Aborting...")
         sys.exit(0)
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
     try:
         conn.execute("DROP TABLE IF EXISTS permissions;")
         conn.execute("DROP TABLE IF EXISTS roles;")
@@ -75,7 +75,7 @@ def clear_db() -> None:
 def status_db() -> None:
     """Prints the number of roles and permissions in the SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
