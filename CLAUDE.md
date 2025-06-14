@@ -11,9 +11,9 @@ This is a Python CLI tool for querying Google Cloud Platform IAM roles and permi
 - **Entry point**: `src/gcp_iam_roles/__init__.py` - Main CLI interface using argparse
 - **Database layer**: `src/gcp_iam_roles/db.py` - SQLite database management for roles/permissions/services
 - **Authentication**: `src/gcp_iam_roles/auth.py` - Google Cloud authentication handling
-- **Core modules**: 
+- **Core modules**:
   - `roles.py` - Role search and synchronization
-  - `permissions.py` - Permission search and synchronization  
+  - `permissions.py` - Permission search and synchronization
   - `services.py` - Service search and synchronization
 
 The application stores data locally in `~/.local/share/gcp-iam-roles/gcp-iam-roles.db` (SQLite database).
@@ -32,8 +32,6 @@ The application stores data locally in `~/.local/share/gcp-iam-roles/gcp-iam-rol
 - `make test-service` - Test service search functionality
 
 ### Code Quality
-- `ruff format --check .` - Check code formatting
-- `ruff check .` - Run linting checks
 - `uvx ruff check` - Lint Python code after every code change
 - `uvx ruff format` - Format Python code after each code change
 
@@ -55,7 +53,11 @@ The application stores data locally in `~/.local/share/gcp-iam-roles/gcp-iam-rol
 
 - Search IAM roles by name pattern
 - Search permissions to find which roles include them
-- Search services 
+- Search services
 - Sync roles/permissions/services from Google Cloud APIs
 - Local SQLite caching for fast queries
 - Bash completion support
+
+## Coding Guidelines
+
+- Always add type annotation for each function

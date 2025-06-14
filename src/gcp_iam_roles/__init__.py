@@ -24,7 +24,7 @@ console = Console()
 
 
 # Cache credentials to avoid multiple authentication calls
-def ensure_authenticated():
+def ensure_authenticated() -> object:
     """Ensure Google Cloud credentials are available, caching the result."""
     if not hasattr(ensure_authenticated, "_cache"):
         ensure_authenticated._cache = get_google_credentials()
