@@ -117,5 +117,45 @@ def search_permissions(permission_name: str) -> None:
     conn.close()
 
 
+def list_permissions(role_name: str) -> None:
+    """
+    List Google IAM role permissions for a given role
+    """
+    from contextlib import suppress
+
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT permission
+            FROM permissions
+            WHERE role = ?
+            ORDER BY permission;
+            """,
+            (role_name,),
+        )
+        rows = cursor.fetchall()
+
+        if not rows:
+            console.print(f"[yellow]No permissions found for role: {role_name}[/yellow]")
+            return
+
+        table = Table(title=f"[bold yellow]Permissions for Role: {role_name}[/bold yellow]")
+        table.add_column("Permission", justify="left", max_width=100, style="green")
+
+        for row in rows:
+            table.add_row(str(row[0]))
+
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
+
+    with suppress(BrokenPipeError):
+        console.print(table)
+
+    conn.close()
+
+
 if __name__ == "__main__":
     sync_permissions()

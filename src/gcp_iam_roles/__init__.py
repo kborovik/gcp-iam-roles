@@ -12,7 +12,7 @@ from rich.console import Console
 
 from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
-from .permissions import search_permissions, sync_permissions
+from .permissions import list_permissions, search_permissions, sync_permissions
 from .roles import diff_roles, search_roles, sync_roles
 from .services import search_services, sync_services
 
@@ -95,6 +95,9 @@ def permission(
     search: str | None = typer.Option(
         None, "--search", help="Search for permissions by name pattern"
     ),
+    list_role: str | None = typer.Option(
+        None, "--list", help="List all permissions for a given role"
+    ),
 ) -> None:
     """
     Manage GCP IAM permissions.
@@ -103,9 +106,13 @@ def permission(
 
     > gcp-iam-roles permission --search compute.instances.osLogin
 
+    > gcp-iam-roles permission --list compute.admin
+
     """
     if search:
         search_permissions(search)
+    elif list_role:
+        list_permissions(list_role)
     else:
         console.print(ctx.get_help())
         raise typer.Exit()
