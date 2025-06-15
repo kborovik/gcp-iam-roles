@@ -4,8 +4,10 @@ import time
 from dataclasses import dataclass
 
 from google.cloud import service_usage_v1
-from loguru import logger
-from prettytable import from_db_cursor
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 from . import DB_FILE
 
@@ -18,18 +20,17 @@ class Service:
 
 def sync_services() -> list[Service]:
     """Retrieves a list of all Google Cloud services."""
-
-    from .auth import get_google_credentials
+    from . import ensure_authenticated
 
     services = []
     page_size = 10
     delay = 5.0
 
-    logger.info(
-        "Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while..."
+    console.print(
+        "[blue]Searching for Google Cloud Services. Not all Cloud Services provided by Google. This may take a while...[/blue]"
     )
 
-    _, project_id = get_google_credentials()
+    _, project_id = ensure_authenticated()
 
     client = service_usage_v1.ServiceUsageClient()
     request = service_usage_v1.ListServicesRequest(
@@ -43,18 +44,18 @@ def sync_services() -> list[Service]:
                 for svc in page.services
                 if svc.config.name.endswith("googleapis.com")
             ]
-            logger.info(
-                f"Found {len(batch)} Google Cloud Services. Total: {len(services) + len(batch)}"
+            console.print(
+                f"[blue]Found {len(batch)} Google Cloud Services. Total: {len(services) + len(batch)}[/blue]"
             )
             if batch:
                 services.extend(batch)
                 store_services(batch)
             time.sleep(delay)
     except Exception as error:
-        logger.error(f"Error getting Google Cloud Services: {error}")
+        console.print(f"[red]Error getting Google Cloud Services: {error}[/red]")
         raise
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     return services
@@ -63,7 +64,7 @@ def sync_services() -> list[Service]:
 def store_services(services: list[Service]) -> None:
     """Inserts a list of Google Cloud services into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
@@ -72,13 +73,13 @@ def store_services(services: list[Service]) -> None:
             [(service.name, service.title) for service in services],
         )
         conn.commit()
-        logger.success(f"Saved {len(services)} Google Cloud Services in database")
+        console.print(f"[green]Saved {len(services)} Google Cloud Services in database[/green]")
     except sqlite3.IntegrityError:
-        logger.warning("Duplicate Google Cloud Services in database")
+        console.print("[yellow]Duplicate Google Cloud Services in database[/yellow]")
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     conn.close()
@@ -88,7 +89,7 @@ def search_services(service_name: str) -> None:
     """Searches for a Google Cloud Services in the SQLite database table."""
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
@@ -96,13 +97,17 @@ def search_services(service_name: str) -> None:
             "SELECT service,title FROM services WHERE service LIKE ? OR title LIKE ? ORDER BY service;",
             (f"%{service_name}%", f"%{service_name}%"),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
+        rows = cursor.fetchall()
+        table = Table()
+        table.add_column("Service", justify="left", max_width=80, style="blue")
+        table.add_column("Title", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
 
     conn.close()
 

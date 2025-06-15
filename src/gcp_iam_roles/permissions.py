@@ -3,8 +3,10 @@ import sys
 from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
-from loguru import logger
-from prettytable import from_db_cursor
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 from . import DB_FILE
 
@@ -17,11 +19,8 @@ class RolePermissions:
 
 def get_permissions(role_name: str) -> RolePermissions | None:
     """Retrieves a list of all permissions associated with a given IAM role."""
-    from .auth import get_google_credentials
 
-    get_google_credentials()
-
-    logger.info(f"Getting permissions for role: {role_name}")
+    console.print(f"[blue]Getting permissions for role: {role_name}[/blue]")
 
     client = iam_admin_v1.IAMClient()
     role = client.get_role(request=iam_admin_v1.GetRoleRequest(name=role_name))
@@ -29,55 +28,57 @@ def get_permissions(role_name: str) -> RolePermissions | None:
     role_permissions = RolePermissions(role=role.name, permissions=list(role.included_permissions))
 
     if role_permissions.permissions:
-        logger.success(
-            f"Received {len(role_permissions.permissions)} permissions for role: {role_name}"
+        console.print(
+            f"[green]Received {len(role_permissions.permissions)} permissions for role: {role_name}[/green]"
         )
         return role_permissions
     else:
-        logger.warning(f"No permissions found for role: {role_name}")
+        console.print(f"[yellow]No permissions found for role: {role_name}[/yellow]")
         return None
 
 
 def sync_permissions() -> None:
     """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
     # Get roles without permissions from the database
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT r.role 
-            FROM roles r 
-            LEFT JOIN permissions p ON r.role = p.role 
-            WHERE p.role IS NULL 
+            SELECT r.role
+            FROM roles r
+            LEFT JOIN permissions p ON r.role = p.role
+            WHERE p.role IS NULL
             ORDER BY r.role
         """)
         roles_without_permissions = [row[0] for row in cursor.fetchall()]
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     # Insert missing role-permission pairs into 'permissions' table
     for role_name in roles_without_permissions:
-        role_permissions = get_permissions(role_name)
+        # Add 'roles/' prefix for API call
+        full_role_name = f"roles/{role_name}"
+        role_permissions = get_permissions(full_role_name)
         if not role_permissions:
             continue
-        # Create batch inserts instead of individual ones
+        # Create batch inserts with clean role name (without prefix)
         permission_values = [(permission, role_name) for permission in role_permissions.permissions]
         try:
             cursor.executemany(
                 "INSERT INTO permissions (permission, role) VALUES (?, ?)", permission_values
             )
         except sqlite3.IntegrityError as error:
-            logger.warning(f"SQLite IntegrityError: {error}")
+            console.print(f"[yellow]SQLite IntegrityError: {error}[/yellow]")
         except sqlite3.Error as error:
-            logger.error(f"SQLite Error: {error}")
+            console.print(f"[red]SQLite Error: {error}[/red]")
         except KeyboardInterrupt:
-            logger.warning("Operation cancelled by user")
+            console.print("[yellow]Operation cancelled by user[/yellow]")
             sys.exit(130)
 
         conn.commit()
-        logger.success(
-            f"Saved {len(role_permissions.permissions)} permissions for role: {role_name}"
+        console.print(
+            f"[green]Saved {len(role_permissions.permissions)} permissions for role: {role_name}[/green]"
         )
 
     conn.close()
@@ -88,7 +89,7 @@ def search_permissions(permission_name: str) -> None:
 
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
@@ -101,14 +102,57 @@ def search_permissions(permission_name: str) -> None:
             """,
             (f"%{permission_name}%",),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
-        table.max_width = 160
-    except sqlite3.Error as e:
-        print(f"SQLite Error: {e}")
+        rows = cursor.fetchall()
+        table = Table()
+        table.add_column("Role", justify="left", max_width=80, style="blue")
+        table.add_column("Permission", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
+
+    conn.close()
+
+
+def list_permissions(role_name: str) -> None:
+    """
+    List Google IAM role permissions for a given role
+    """
+    from contextlib import suppress
+
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT permission
+            FROM permissions
+            WHERE role = ?
+            ORDER BY permission;
+            """,
+            (role_name,),
+        )
+        rows = cursor.fetchall()
+
+        if not rows:
+            console.print(f"[yellow]No permissions found for role: {role_name}[/yellow]")
+            return
+
+        table = Table()
+        table.add_column(f"Role: {role_name}", justify="left", max_width=100, style="green")
+
+        for row in rows:
+            table.add_row(str(row[0]))
+
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
+
+    with suppress(BrokenPipeError):
+        console.print(table)
 
     conn.close()
 

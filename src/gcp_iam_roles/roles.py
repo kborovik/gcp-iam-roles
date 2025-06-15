@@ -3,8 +3,10 @@ import sys
 from dataclasses import dataclass
 
 from google.cloud import iam_admin_v1
-from loguru import logger
-from prettytable import from_db_cursor
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 from . import DB_FILE
 
@@ -19,13 +21,10 @@ class Role:
 
 def get_roles() -> list[Role]:
     """Retrieves a list of all predefined IAM roles in the current Google Cloud project."""
-    from .auth import get_google_credentials
-
-    get_google_credentials()
 
     roles: list[Role] = []
 
-    logger.info("Getting Google Cloud Predefined Roles...")
+    console.print("[blue]Getting Google Cloud Predefined Roles...[/blue]")
 
     client = iam_admin_v1.IAMClient()
     request = iam_admin_v1.ListRolesRequest()
@@ -41,7 +40,7 @@ def get_roles() -> list[Role]:
             )
         )
 
-    logger.success("Received {} Google Cloud Predefined Roles", len(roles))
+    console.print(f"[green]Received {len(roles)} Google Cloud Predefined Roles[/green]")
 
     return roles
 
@@ -49,22 +48,24 @@ def get_roles() -> list[Role]:
 def sync_roles() -> None:
     """Inserts a list of Google Cloud IAM predefined roles into a SQLite database table."""
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     roles = get_roles()
 
     new_roles = []
     old_roles = []
 
-    logger.info("Storing roles in database...")
+    console.print("[blue]Storing roles in database...[/blue]")
 
     try:
         cursor = conn.cursor()
         for role in roles:
             try:
+                # Strip 'roles/' prefix from role name
+                role_name_clean = role.name.removeprefix("roles/")
                 cursor.execute(
                     "INSERT INTO roles (role, title, description, stage) VALUES (?, ?, ?, ?)",
-                    (role.name, role.title, role.description, role.stage),
+                    (role_name_clean, role.title, role.description, role.stage),
                 )
                 new_roles.append(role)
             except sqlite3.IntegrityError:
@@ -72,14 +73,14 @@ def sync_roles() -> None:
                 continue
         conn.commit()
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
     except KeyboardInterrupt:
-        logger.warning("Operation cancelled by user")
+        console.print("[yellow]Operation cancelled by user[/yellow]")
         sys.exit(130)
 
     conn.close()
 
-    logger.success("New roles: {}, Existing roles: {}", len(new_roles), len(old_roles))
+    console.print(f"[green]New roles: {len(new_roles)}, Existing roles: {len(old_roles)}[/green]")
 
 
 def search_roles(role_name: str) -> None:
@@ -87,7 +88,7 @@ def search_roles(role_name: str) -> None:
 
     from contextlib import suppress
 
-    conn = sqlite3.connect(DB_FILE.as_uri())
+    conn = sqlite3.connect(DB_FILE)
 
     try:
         cursor = conn.cursor()
@@ -100,16 +101,140 @@ def search_roles(role_name: str) -> None:
             """,
             (f"%{role_name}%", f"%{role_name}%", f"%{role_name}%"),
         )
-        table = from_db_cursor(cursor)
-        table.align = "l"
-        table.max_width = 160
+        rows = cursor.fetchall()
+        table = Table()
+        table.add_column("Role", justify="left", max_width=80, style="blue")
+        table.add_column("Title", justify="left", max_width=80, style="green")
+        for row in rows:
+            table.add_row(str(row[0]), str(row[1]))
     except sqlite3.Error as error:
-        logger.error(f"SQLite Error: {error}")
+        console.print(f"[red]SQLite Error: {error}[/red]")
 
     with suppress(BrokenPipeError):
-        print(table)
+        console.print(table)
 
     conn.close()
+
+
+def _get_role_permissions(cursor: sqlite3.Cursor, role_name: str) -> set[str]:
+    """Get permissions for a role from the database."""
+    cursor.execute(
+        "SELECT permission FROM permissions WHERE role = ? ORDER BY permission", (role_name,)
+    )
+    return {row[0] for row in cursor.fetchall()}
+
+
+def _validate_roles_exist(
+    role1: str, role2: str, role1_perms: set[str], role2_perms: set[str]
+) -> bool:
+    """Validate that both roles exist in the database."""
+    if not role1_perms and not role2_perms:
+        console.print(f"[red]Neither role '{role1}' nor '{role2}' found in database[/red]")
+        return False
+    elif not role1_perms:
+        console.print(f"[red]Role '{role1}' not found in database[/red]")
+        return False
+    elif not role2_perms:
+        console.print(f"[red]Role '{role2}' not found in database[/red]")
+        return False
+    return True
+
+
+def diff_roles(role1: str, role2: str) -> None:
+    """Compares permissions between two GCP IAM roles and displays the differences."""
+    from contextlib import suppress
+
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+
+        role1_permissions = _get_role_permissions(cursor, role1)
+        role2_permissions = _get_role_permissions(cursor, role2)
+
+        if not _validate_roles_exist(role1, role2, role1_permissions, role2_permissions):
+            return
+
+        # Calculate differences
+        only_in_role1 = role1_permissions - role2_permissions
+        only_in_role2 = role2_permissions - role1_permissions
+        common_permissions = role1_permissions & role2_permissions
+
+        # Create summary table
+        summary_table = Table()
+        summary_table.add_column(f"{role1} vs. {role2}", justify="left", style="yellow")
+        summary_table.add_column("Count", justify="right", style="green")
+
+        summary_table.add_row("Common Permissions", str(len(common_permissions)))
+        summary_table.add_row(f"Only in {role1}", str(len(only_in_role1)))
+        summary_table.add_row(f"Only in {role2}", str(len(only_in_role2)))
+        summary_table.add_row(
+            "Total Unique Permissions", str(len(role1_permissions | role2_permissions))
+        )
+
+        console.print(summary_table)
+        console.print()
+
+        # Show common permissions if there are any
+        if common_permissions:
+            common_table = Table()
+            common_table.add_column(
+                "Common Permissions", justify="left", style="green", max_width=80
+            )
+            for permission in sorted(common_permissions):
+                common_table.add_row(permission)
+            console.print(common_table)
+
+        # Show permissions only in role1
+        role1_table = Table()
+        role1_table.add_column(
+            f"Only in {role1} (left)", justify="left", style="cyan", max_width=80
+        )
+        if only_in_role1:
+            for permission in sorted(only_in_role1):
+                role1_table.add_row(permission)
+        console.print(role1_table)
+        console.print()
+
+        # Show permissions only in role2
+        role2_table = Table()
+        role2_table.add_column(
+            f"Only in {role2} (right)", justify="left", style="blue", max_width=80
+        )
+        if only_in_role2:
+            for permission in sorted(only_in_role2):
+                role2_table.add_row(permission)
+        console.print(role2_table)
+        console.print()
+
+    except sqlite3.Error as error:
+        console.print(f"[red]SQLite Error: {error}[/red]")
+
+    with suppress(BrokenPipeError):
+        pass
+
+    conn.close()
+
+
+def list_roles() -> None:
+    """
+    List Google IAM Roles for CLI completion
+    """
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT role FROM roles ORDER BY role")
+        roles = cursor.fetchall()
+
+        for role in roles:
+            print(role[0])
+
+    except sqlite3.Error:
+        # Silently fail if database doesn't exist or has issues
+        pass
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

@@ -6,126 +6,157 @@ package_name = metadata(__package__).get("name")
 DB_FILE: Path = Path.home().joinpath(".local", "share", package_name, f"{package_name}.db")
 DB_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-import argparse
-import sys
 
-import argcomplete
-from loguru import logger
+import typer
+from rich.console import Console
 
+from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
-from .permissions import search_permissions, sync_permissions
-from .roles import search_roles, sync_roles
+from .permissions import list_permissions, search_permissions, sync_permissions
+from .roles import diff_roles, list_roles, search_roles, sync_roles
 from .services import search_services, sync_services
 
 create_db()
 
+console = Console()
 
-def cli() -> None:
-    logger.remove()
-    logger.level("ERROR", color="<red>")
-    logger.level("WARNING", color="<yellow>")
-    logger.level("INFO", color="<blue>")
-    logger.level("SUCCESS", color="<green>")
-    logger.level("DEBUG", color="<cyan>")
-    logger.add(
-        sink=sys.stdout,
-        enqueue=True,
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | <level>{level: <7}</level> | <level>{message}</level>",
-    )
+app = typer.Typer(
+    name="gcp-iam-roles",
+    help="Search Google Cloud IAM roles and permissions",
+)
 
-    parser = argparse.ArgumentParser(description="Search Google Cloud IAM roles and permissions")
 
-    parser.add_argument(
-        "-r",
-        "--role",
-        nargs=1,
-        help="Search for Roles",
-    )
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context) -> None:
+    """Search Google Cloud IAM roles and permissions."""
+    if ctx.invoked_subcommand is None:
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
-    parser.add_argument(
-        "-p",
-        "--permission",
-        nargs=1,
-        help="Search for Permissions",
-    )
 
-    parser.add_argument(
-        "-s",
-        "--service",
-        nargs=1,
-        help="Search for Services",
-    )
+# Cache credentials to avoid multiple authentication calls
+def ensure_authenticated() -> object:
+    """Ensure Google Cloud credentials are available, caching the result."""
+    if not hasattr(ensure_authenticated, "_cache"):
+        ensure_authenticated._cache = get_google_credentials()
+    return ensure_authenticated._cache
 
-    parser.add_argument(
-        "--sync-roles",
-        action="store_true",
-        help="Sync Predefined AIM Roles and Permissions",
-    )
 
-    parser.add_argument(
-        "--sync-services",
-        action="store_true",
-        help="Sync Google Cloud Services",
-    )
+@app.command()
+def role(
+    ctx: typer.Context,
+    search: str | None = typer.Option(
+        None,
+        "--search",
+        help="Search for roles by name pattern (searches role names, titles, and descriptions)",
+    ),
+    sync: bool = typer.Option(
+        False, "--sync", help="Sync predefined IAM roles and permissions from Google Cloud APIs"
+    ),
+    diff: list[str] = typer.Option(
+        [], "--diff", help="Compare permissions between two roles (use --diff role1 --diff role2)"
+    ),
+) -> None:
+    """
+    Manage GCP IAM roles.
 
-    parser.add_argument(
-        "--status",
-        action="store_true",
-        help="Show Roles and Permissions count",
-    )
+    Examples:
 
-    parser.add_argument(
-        "--bash-completion",
-        action="store_true",
-        help="Generate bash completion",
-    )
+      > gcp-iam-roles role --search compute.
 
-    parser.add_argument(
-        "--clear-db",
-        action="store_true",
-        help="Drop database tables",
-    )
+      > gcp-iam-roles role --diff compute.osAdminLogin --diff compute.osLogin
 
-    argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+      > gcp-iam-roles role --sync
 
-    if args.role:
-        search_roles(args.role[0])
-
-    elif args.permission:
-        search_permissions(args.permission[0])
-
-    elif args.service:
-        search_services(args.service[0])
-
-    elif args.sync_roles:
+    """
+    if search:
+        search_roles(search)
+    elif sync:
+        ensure_authenticated()
         create_db()
         sync_roles()
         sync_permissions()
+    elif diff:
+        diff_size = 2
+        if len(diff) != diff_size:
+            console.print("[red]Error: --diff requires exactly two role names[/red]")
+            console.print("Example: gcp-iam-roles role --diff compute.viewer --diff storage.viewer")
+            raise typer.Exit(1)
+        diff_roles(diff[0], diff[1])
+    else:
+        # Show help when no options are provided
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
-    elif args.sync_services:
+
+@app.command()
+def permission(
+    ctx: typer.Context,
+    search: str | None = typer.Option(
+        None, "--search", help="Search for permissions by name pattern"
+    ),
+    list_role: str | None = typer.Option(
+        None, "--list", help="List all permissions for a given role"
+    ),
+) -> None:
+    """
+    Manage GCP IAM permissions.
+
+    Examples:
+
+    > gcp-iam-roles permission --search compute.instances.osLogin
+
+    > gcp-iam-roles permission --list compute.admin
+
+    """
+    if search:
+        search_permissions(search)
+    elif list_role:
+        list_permissions(list_role)
+    else:
+        console.print(ctx.get_help())
+        raise typer.Exit()
+
+
+@app.command()
+def service(
+    ctx: typer.Context,
+    search: str | None = typer.Option(None, "--search", help="Search for services by name pattern"),
+    sync: bool = typer.Option(False, "--sync", help="Sync Google Cloud services"),
+) -> None:
+    """Manage GCP services."""
+    if search:
+        search_services(search)
+    elif sync:
+        ensure_authenticated()
         create_db()
         sync_services()
-
-    elif args.status:
-        status_db()
-
-    elif args.bash_completion:
-        completion_dir = Path.home().joinpath(".local", "share", "bash-completion", "completions")
-        completion_dir.mkdir(parents=True, exist_ok=True)
-        completion_file = completion_dir.joinpath(package_name)
-        completion_file.write_text(
-            f'#!/usr/bin/env bash\neval "$(register-python-argcomplete {package_name})"'
-        )
-        logger.info(f"Bash completion installed to {completion_file}")
-        sys.exit(0)
-
-    elif args.clear_db:
-        clear_db()
-
     else:
-        parser.print_help()
-        sys.exit(0)
+        console.print(ctx.get_help())
+        raise typer.Exit()
+
+
+@app.command()
+def status() -> None:
+    """Show roles and permissions count."""
+    status_db()
+
+
+@app.command("clear-db")
+def clear_database() -> None:
+    """Drop database tables."""
+    clear_db()
+
+
+@app.command("_list-roles", hidden=True)
+def _list_roles_completion() -> None:
+    """List roles for shell completion."""
+    list_roles()
+
+
+def cli() -> None:
+    """Entry point for the CLI."""
+    app()
 
 
 if __name__ == "__main__":

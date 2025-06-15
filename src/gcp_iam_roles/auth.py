@@ -2,7 +2,9 @@ import sys
 
 import google.auth
 from google.auth.credentials import Credentials
-from loguru import logger
+from rich.console import Console
+
+console = Console()
 
 
 def get_google_credentials() -> tuple[Credentials, str]:
@@ -11,10 +13,10 @@ def get_google_credentials() -> tuple[Credentials, str]:
         credentials.refresh(google.auth.transport.requests.Request())
         return credentials, project_id
     except google.auth.exceptions.DefaultCredentialsError as error:
-        logger.error("Authentication failed: ", error)
+        console.print(f"[red]Authentication failed: {error}[/red]")
         sys.exit(1)
     except google.auth.exceptions.RefreshError:
-        logger.error(
-            "Token has been expired or revoked. Run `gcloud auth login --update-adc` to authenticate."
+        console.print(
+            "[red]Token has been expired or revoked. Run `gcloud auth login --update-adc` to authenticate.[/red]"
         )
         sys.exit(1)
