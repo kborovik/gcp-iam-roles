@@ -161,8 +161,8 @@ def diff_roles(role1: str, role2: str) -> None:
         common_permissions = role1_permissions & role2_permissions
 
         # Create summary table
-        summary_table = Table(title=f"[bold cyan]Role Comparison: {role1} vs {role2}[/bold cyan]")
-        summary_table.add_column("Category", justify="left", style="yellow")
+        summary_table = Table()
+        summary_table.add_column(f"{role1} vs. {role2}", justify="left", style="yellow")
         summary_table.add_column("Count", justify="right", style="green")
 
         summary_table.add_row("Common Permissions", str(len(common_permissions)))
@@ -175,12 +175,22 @@ def diff_roles(role1: str, role2: str) -> None:
         console.print(summary_table)
         console.print()
 
+        # Show common permissions if there are any
+        if common_permissions:
+            common_table = Table()
+            common_table.add_column(
+                "Common Permissions", justify="left", style="green", max_width=80
+            )
+            for permission in sorted(common_permissions):
+                common_table.add_row(permission)
+            console.print(common_table)
+
         # Show permissions only in role1
         if only_in_role1:
-            role1_table = Table(
-                title=f"[bold red]Permissions only in '{role1}' ({len(only_in_role1)} permissions)[/bold red]"
+            role1_table = Table()
+            role1_table.add_column(
+                f"Only in {role1} (left)", justify="left", style="cyan", max_width=80
             )
-            role1_table.add_column("Permission", justify="left", style="red", max_width=80)
             for permission in sorted(only_in_role1):
                 role1_table.add_row(permission)
             console.print(role1_table)
@@ -188,24 +198,14 @@ def diff_roles(role1: str, role2: str) -> None:
 
         # Show permissions only in role2
         if only_in_role2:
-            role2_table = Table(
-                title=f"[bold blue]Permissions only in '{role2}' ({len(only_in_role2)} permissions)[/bold blue]"
+            role2_table = Table()
+            role2_table.add_column(
+                f"Only in {role2} (right)", justify="left", style="blue", max_width=80
             )
-            role2_table.add_column("Permission", justify="left", style="blue", max_width=80)
             for permission in sorted(only_in_role2):
                 role2_table.add_row(permission)
             console.print(role2_table)
             console.print()
-
-        # Show common permissions if there are any
-        if common_permissions:
-            common_table = Table(
-                title=f"[bold green]Common Permissions ({len(common_permissions)} permissions)[/bold green]"
-            )
-            common_table.add_column("Permission", justify="left", style="green", max_width=80)
-            for permission in sorted(common_permissions):
-                common_table.add_row(permission)
-            console.print(common_table)
 
     except sqlite3.Error as error:
         console.print(f"[red]SQLite Error: {error}[/red]")
