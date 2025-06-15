@@ -60,22 +60,14 @@ def role(
     """
     Manage GCP IAM roles.
 
-    Search for existing roles, sync the latest roles from Google Cloud, or compare permissions between roles.
-
     Examples:
 
-      gcp-iam-roles role --search viewer
-      gcp-iam-roles role --search compute
-      gcp-iam-roles role --sync
-      gcp-iam-roles role --diff compute.viewer --diff storage.viewer
+      > gcp-iam-roles role --search compute.
 
-    Notes:
+      > gcp-iam-roles role --diff compute.osAdminLogin --diff compute.osLogin
 
-      • Search is case-insensitive and matches role names, titles, and descriptions
-      • Sync requires authentication: gcloud auth login --update-adc
-      • Role names displayed without 'roles/' prefix for cleaner output
-      • Sync operation may take several minutes to complete
-      • Diff compares permissions between two roles stored in the local database
+      > gcp-iam-roles role --sync
+
     """
     if search:
         search_roles(search)
@@ -104,7 +96,14 @@ def permission(
         None, "--search", help="Search for permissions by name pattern"
     ),
 ) -> None:
-    """Manage GCP IAM permissions."""
+    """
+    Manage GCP IAM permissions.
+
+    Examples:
+
+    > gcp-iam-roles permission --search compute.instances.osLogin
+
+    """
     if search:
         search_permissions(search)
     else:

@@ -26,38 +26,26 @@ help: setup
 
 setup: $(uv_bin) .gitignore .venv uv.lock
 
-test: test-help test-roles test-permissions test-service
+test: setup test-help test-roles test-permissions test-service
 
 test-help:
-	uv run gcp-iam-roles
-	uv run gcp-iam-roles --help
+	gcp-iam-roles
+	gcp-iam-roles --help
+	gcp-iam-roles status
 
 test-roles:
-	uv run gcp-iam-roles --status
-	uv run gcp-iam-roles --role cloudquotas.viewer
-	uv run gcp-iam-roles --role roles/cloudprofiler.user
-	uv run gcp-iam-roles --role vvvvvvv
+	set -e
+	gcp-iam-roles role
+	gcp-iam-roles role --search storage.
+	gcp-iam-roles role --diff compute.osAdminLogin --diff compute.osLogin
 
 test-permissions:
-	uv run gcp-iam-roles --status
-	uv run gcp-iam-roles --permission compute.addresses.createTagBinding
-	uv run gcp-iam-roles --permission vvvvvvv
+	gcp-iam-roles permission
+	gcp-iam-roles permission --search compute.instances.osLogin
 
 test-service:
-	uv run gcp-iam-roles --status
-	uv run gcp-iam-roles --service actions
-	uv run gcp-iam-roles --service xxxxxxx
-
-test-sync-roles:
-	uv run gcp-iam-roles --sync-roles
-	uv run gcp-iam-roles --status
-
-test-sync-services:
-	uv run gcp-iam-roles --sync-services
-	uv run gcp-iam-roles --status
-
-run:
-	uv run $(NAME)
+	gcp-iam-roles
+	gcp-iam-roles service --search compute
 
 build: setup
 	rm -rf dist/*
