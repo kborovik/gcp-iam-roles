@@ -98,7 +98,7 @@ def search_services(service_name: str) -> None:
             (f"%{service_name}%", f"%{service_name}%"),
         )
         rows = cursor.fetchall()
-        table = Table(title="[bold green]GCP Services[/bold green]")
+        table = Table()
         table.add_column("Service", justify="left", max_width=80, style="blue")
         table.add_column("Title", justify="left", max_width=80, style="green")
         for row in rows:

@@ -13,7 +13,7 @@ from rich.console import Console
 from .auth import get_google_credentials
 from .db import clear_db, create_db, status_db
 from .permissions import list_permissions, search_permissions, sync_permissions
-from .roles import diff_roles, search_roles, sync_roles
+from .roles import diff_roles, list_roles, search_roles, sync_roles
 from .services import search_services, sync_services
 
 create_db()
@@ -146,6 +146,12 @@ def status() -> None:
 def clear_database() -> None:
     """Drop database tables."""
     clear_db()
+
+
+@app.command("_list-roles", hidden=True)
+def _list_roles_completion() -> None:
+    """List roles for shell completion."""
+    list_roles()
 
 
 def cli() -> None:

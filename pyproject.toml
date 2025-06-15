@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [dependency-groups]
-dev = ["ruff>=0.11.0", "pytest>=8.0.0"]
+dev = ["ruff>=0.11.0"]
 
 [tool.ruff]
 line-length = 100

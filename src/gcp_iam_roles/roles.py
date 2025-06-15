@@ -102,7 +102,7 @@ def search_roles(role_name: str) -> None:
             (f"%{role_name}%", f"%{role_name}%", f"%{role_name}%"),
         )
         rows = cursor.fetchall()
-        table = Table(title="[bold magenta]GCP IAM Roles[/bold magenta]")
+        table = Table()
         table.add_column("Role", justify="left", max_width=80, style="blue")
         table.add_column("Title", justify="left", max_width=80, style="green")
         for row in rows:
@@ -186,26 +186,26 @@ def diff_roles(role1: str, role2: str) -> None:
             console.print(common_table)
 
         # Show permissions only in role1
+        role1_table = Table()
+        role1_table.add_column(
+            f"Only in {role1} (left)", justify="left", style="cyan", max_width=80
+        )
         if only_in_role1:
-            role1_table = Table()
-            role1_table.add_column(
-                f"Only in {role1} (left)", justify="left", style="cyan", max_width=80
-            )
             for permission in sorted(only_in_role1):
                 role1_table.add_row(permission)
-            console.print(role1_table)
-            console.print()
+        console.print(role1_table)
+        console.print()
 
         # Show permissions only in role2
+        role2_table = Table()
+        role2_table.add_column(
+            f"Only in {role2} (right)", justify="left", style="blue", max_width=80
+        )
         if only_in_role2:
-            role2_table = Table()
-            role2_table.add_column(
-                f"Only in {role2} (right)", justify="left", style="blue", max_width=80
-            )
             for permission in sorted(only_in_role2):
                 role2_table.add_row(permission)
-            console.print(role2_table)
-            console.print()
+        console.print(role2_table)
+        console.print()
 
     except sqlite3.Error as error:
         console.print(f"[red]SQLite Error: {error}[/red]")
@@ -214,6 +214,27 @@ def diff_roles(role1: str, role2: str) -> None:
         pass
 
     conn.close()
+
+
+def list_roles() -> None:
+    """
+    List Google IAM Roles for CLI completion
+    """
+    conn = sqlite3.connect(DB_FILE)
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT role FROM roles ORDER BY role")
+        roles = cursor.fetchall()
+
+        for role in roles:
+            print(role[0])
+
+    except sqlite3.Error:
+        # Silently fail if database doesn't exist or has issues
+        pass
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
