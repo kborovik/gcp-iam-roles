@@ -42,7 +42,7 @@ test-roles:
 test-permissions:
 	gcp-iam-roles permission
 	gcp-iam-roles permission --search compute.instances.osLogin
-	gcp-iam-roles permission --list compute.instances.osLogin
+	gcp-iam-roles permission --list storage.admin
 
 test-service:
 	gcp-iam-roles

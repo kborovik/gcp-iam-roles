@@ -103,7 +103,7 @@ def search_permissions(permission_name: str) -> None:
             (f"%{permission_name}%",),
         )
         rows = cursor.fetchall()
-        table = Table(title="[bold yellow]GCP IAM Permissions[/bold yellow]")
+        table = Table()
         table.add_column("Role", justify="left", max_width=80, style="blue")
         table.add_column("Permission", justify="left", max_width=80, style="green")
         for row in rows:
@@ -142,8 +142,8 @@ def list_permissions(role_name: str) -> None:
             console.print(f"[yellow]No permissions found for role: {role_name}[/yellow]")
             return
 
-        table = Table(title=f"[bold yellow]Permissions for Role: {role_name}[/bold yellow]")
-        table.add_column("Permission", justify="left", max_width=100, style="green")
+        table = Table()
+        table.add_column(f"Role: {role_name}", justify="left", max_width=100, style="green")
 
         for row in rows:
             table.add_row(str(row[0]))
