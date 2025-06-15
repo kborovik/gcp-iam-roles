@@ -65,7 +65,7 @@ wheels = [
 
 [[package]]
 name = "gcp-iam-roles"
-version = "2025.6.13.post2322"
+version = "2025.6.15"
 source = { editable = "." }
 dependencies = [
     { name = "google-cloud-iam" },
